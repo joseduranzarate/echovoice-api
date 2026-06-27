@@ -1,5 +1,4 @@
 import os
-import uuid
 from typing import Optional
 
 from dotenv import load_dotenv
@@ -20,6 +19,11 @@ from webhooks import handle_stripe_webhook
 LIVEKIT_URL = os.environ["LIVEKIT_URL"]
 LIVEKIT_API_KEY = os.environ["LIVEKIT_API_KEY"]
 LIVEKIT_API_SECRET = os.environ["LIVEKIT_API_SECRET"]
+
+# Single shared room — must match the agent's ROOM_NAME. MVP only supports
+# one concurrent conversation globally. Replace with per-call rooms once
+# the agent switches to LiveKit Agent Worker SDK dispatch (Chunk 19).
+DEFAULT_ROOM = os.environ.get("DEFAULT_ROOM", "speech-room")
 
 app = FastAPI(title="speech_project api")
 
@@ -68,9 +72,7 @@ def mint_token(
             },
         )
 
-    # If caller doesn't pin a room (the normal browser flow), generate a
-    # unique one per call. Each call → its own room → its own agent.
-    room_name = room or f"call-{uuid.uuid4().hex[:12]}"
+    room_name = room or DEFAULT_ROOM
 
     # LiveKit identity is the Clerk user_id so the agent can attribute the
     # session to a real account downstream.
