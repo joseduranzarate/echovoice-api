@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Echo design tokens — single source of truth.
+   Colors and typography from design_handoff_echo/README.md. Coral signals
+   warmth, NEVER alarm. Sage is RESERVED for the "Echo is speaking" cue only.
+   ────────────────────────────────────────────────────────────────────────── */
+@theme {
+  --color-ink: #1B1A18;
+  --color-paper: #F3F1ED;
+  --color-surface: #FFFFFF;
+
+  --color-coral: #DD6B4E;
+  --color-coral-deep: #C5523A;
+  --color-coral-light: #F7CBB1;
+  --color-coral-wash: #FFF6F1;
+  --color-coral-border: #F4DDD2;
+
+  --color-sage: #5B8C6E;
+
+  --color-text-muted: #6B6760;
+  --color-text-soft: #8A857C;
+  --color-text-faint: #A8A29A;
+
+  --color-border: #E7E3DD;
+  --color-border-soft: #EDE9E3;
+
+  --font-display: "Cabinet Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "General Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --shadow-pill: 0 12px 28px -12px rgba(27, 26, 24, 0.5);
+  --shadow-card: 0 18px 40px -20px rgba(27, 26, 24, 0.55);
+  --shadow-orb: 0 28px 64px -20px rgba(197, 82, 58, 0.6);
+}
+
+html, body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Display headings — Cabinet Grotesk with tight tracking. */
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.025em;
+  line-height: 1.04;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Motion — "breathing, not blinking." All transforms/opacity. No layout thrash.
+   ────────────────────────────────────────────────────────────────────────── */
+@keyframes breathe {
+  0%, 100% { transform: scale(0.97); }
+  50%      { transform: scale(1.04); }
+}
+
+@keyframes breathe-slow {
+  0%, 100% { transform: scale(0.98); opacity: 0.5; }
+  50%      { transform: scale(1.06); opacity: 0.8; }
+}
+
+@keyframes wave {
+  0%   { transform: scale(0.6); opacity: 0.55; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.15); }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-breathe        { animation: breathe 5s ease-in-out infinite; }
+.animate-breathe-slow   { animation: breathe-slow 6s ease-in-out infinite; }
+.animate-spin-slow      { animation: spin-slow 4s linear infinite; }
+.animate-dot-pulse      { animation: dot-pulse 1.6s ease-in-out infinite; }
+.animate-fade-up        { animation: fade-up 0.3s ease-out both; }
