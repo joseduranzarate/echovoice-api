@@ -13,13 +13,13 @@ export default function SignInPage() {
     if (!signIn) return;
     setLoading(strategy === "oauth_google" ? "google" : "apple");
     try {
-      await signIn.sso({
+      await signIn.authenticateWithRedirect({
         strategy,
-        redirectUrl: "/",
-        redirectCallbackUrl: "/sign-in/sso-callback",
+        redirectUrl: "/sign-in/sso-callback",
+        redirectUrlComplete: "/",
       });
-    } catch {
-      // Clerk handles its own error UI on the redirect; just clear local state.
+    } catch (err) {
+      console.error("SSO flow failed:", err);
       setLoading(null);
     }
   }
