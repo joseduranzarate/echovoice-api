@@ -1,0 +1,27 @@
+# Fly Machines config for the Echo agent.
+#
+# Option 1 — always-on single machine. One agent, listening for LiveKit rooms.
+# Handles one concurrent conversation. To scale: switch to LiveKit Agent
+# Worker SDK + Fly machine pool (Chunk 19+).
+#
+# After `flyctl apps create echo-agent`:
+#   flyctl secrets set LIVEKIT_URL=... LIVEKIT_API_KEY=... ... (see deploy notes)
+#   flyctl deploy
+
+app = "echo-agent"
+primary_region = "iad"  # change to your nearest Fly region
+
+[build]
+  dockerfile = "Dockerfile"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+
+# No [http_service] — the agent doesn't accept inbound HTTP. It only opens
+# outbound WebSocket connections to LiveKit Cloud.
+
+# Always-on. Without this, Fly auto-stops idle machines and the agent would
+# miss room events.
+[deploy]
+  strategy = "immediate"

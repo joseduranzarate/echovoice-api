@@ -1,0 +1,806 @@
+{
+  "RIA": {
+    "US": {
+      "bank": {
+        "requiredFields": [
+          {
+            "fieldId": "bankAccountNumber",
+            "maxLength": 50,
+            "minLength": 8,
+            "placeholder": "Número de cuenta bancaria"
+          },
+          {
+            "fieldId": "bankAccountType",
+            "maxLength": 0,
+            "minLength": 0,
+            "placeholder": "Tipo de cuenta"
+          },
+          {
+            "fieldId": "bankRoutingCode",
+            "maxLength": 50,
+            "minLength": 5,
+            "placeholder": "ACH Routing Number"
+          },
+          {
+            "fieldId": "beneficiaryFirstName",
+            "maxLength": 60,
+            "minLength": 1,
+            "placeholder": "Nombre(s)"
+          },
+          {
+            "fieldId": "beneficiaryLastName",
+            "maxLength": 60,
+            "minLength": 1,
+            "placeholder": "Apellido(s)"
+          },
+          {
+            "fieldId": "beneficiaryCellphoneNumber",
+            "maxLength": 10,
+            "minLength": 10,
+            "placeholder": "Número de celular"
+          },
+          {
+            "fieldId": "beneficiaryState",
+            "maxLength": 0,
+            "minLength": 0,
+            "placeholder": "Estado"
+          },
+          {
+            "fieldId": "beneficiaryCity",
+            "maxLength": 50,
+            "minLength": 2,
+            "placeholder": "Ciudad"
+          },
+          {
+            "fieldId": "beneficiaryAddress",
+            "maxLength": 255,
+            "minLength": 5,
+            "placeholder": "Dirección completa"
+          },
+          {
+            "fieldId": "beneficiaryZipCode",
+            "maxLength": 9,
+            "minLength": 5,
+            "placeholder": "Código postal"
+          }
+        ]
+      }
+    },
+    "EC": {
+      "bank": {
+        "requiredFields": [
+          {
+            "fieldId": "bankAccountNumber",
+            "maxLength": 22,
+            "minLength": 0,
+            "placeholder": "Número de cuenta bancaria"
+          },
+          {
+            "fieldId": "bankAccountType",
+            "maxLength": 0,
+            "minLength": 0,
+            "placeholder": "Tipo de cuenta"
+          },
+          {
+            "fieldId": "beneficiaryFirstName",
+            "maxLength": 50,
+            "minLength": 1,
+            "placeholder": "Nombre(s)"
+          },
+          {
+            "fieldId": "beneficiaryLastName",
+            "maxLength": 50,
+            "minLength": 1,
+            "placeholder": "Apellido(s)"
+          },
+          {
+            "fieldId": "beneficiaryState",
+            "maxLength": 50,
+            "minLength": 1,
+            "placeholder": "Estado"
+          },
+          {
+            "fieldId": "beneficiaryDocumentNumber",
+            "maxLength": 50,
+            "minLength": 1,
+            "placeholder": "Cédula de identidad"
+          },
+          {
+            "fieldId": "beneficiaryCity",
+            "maxLength": 50,
+            "minLength": 1,
+            "placeholder": "Ciudad"
+          }
+        ]
+      }
+    },
+    "CO": {
+      "bank": {
+        "requiredFields": [
+          {
+            "fieldId": "bankAccountNumber",
+            "minLength": 8,
+            "maxLength": 20,
+            "placeholder": "Número de cuenta bancaria"
+          },
+          {
+            "fieldId": "beneficiaryCity",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Ciudad"
+          },
+          {
+            "fieldId": "beneficiaryCountry",
+            "minLength": 2,
+            "maxLength": 2,
+            "placeholder": "País"
+          },
+          {
+            "fieldId": "beneficiaryFirstName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Nombre(s)"
+          },
+          {
+            "fieldId": "beneficiaryLastName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Apellido(s)"
+          },
+          {
+            "fieldId": "beneficiaryState",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Estado"
+          },
+          {
+            "fieldId": "beneficiaryCellphoneNumber",
+            "minLength": 1,
+            "maxLength": 15,
+            "placeholder": "Número de celular"
+          }
+        ]
+      },
+      "wallet": {
+        "requiredFields": [
+          {
+            "fieldId": "beneficiaryFirstName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Nombre(s)"
+          },
+          {
+            "fieldId": "beneficiaryLastName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Apellido(s)"
+          },
+          {
+            "fieldId": "MobileWalletAccountNo",
+            "minLength": 10,
+            "maxLength": 10,
+            "placeholder": "Número de cuenta de billetera móvil"
+          },
+          {
+            "fieldId": "beneficiaryCellphoneNumberWallet",
+            "minLength": 10,
+            "maxLength": 12,
+            "placeholder": "Número de celular"
+          },
+          {
+            "fieldId": "beneficiaryCity",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Ciudad"
+          },
+          {
+            "fieldId": "beneficiaryState",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Estado"
+          },
+          {
+            "fieldId": "beneficiaryDocumentNumber",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Cédula de Identidad o Extranjería"
+          }
+        ]
+      }
+    },
+    "CL": {
+      "bank": {
+        "requiredFields": [
+          {
+            "fieldId": "bankAccountNumber",
+            "maxLength": 22,
+            "minLength": 0,
+            "placeholder": "Número de cuenta bancaria"
+          },
+          {
+            "fieldId": "bankAccountType",
+            "maxLength": 0,
+            "minLength": 0,
+            "placeholder": "Tipo de cuenta"
+          },
+          {
+            "fieldId": "beneficiaryCity",
+            "maxLength": 50,
+            "minLength": 1,
+            "placeholder": "Ciudad"
+          },
+          {
+            "fieldId": "beneficiaryDocumentNumber",
+            "maxLength": 50,
+            "minLength": 1,
+            "placeholder": "Número de RUT (8 a 9 dígitos, incluye el verificador)"
+          },
+          {
+            "fieldId": "beneficiaryFirstName",
+            "maxLength": 50,
+            "minLength": 1,
+            "placeholder": "Nombre(s)"
+          },
+          {
+            "fieldId": "beneficiaryLastName",
+            "maxLength": 50,
+            "minLength": 1,
+            "placeholder": "Apellido(s)"
+          },
+          {
+            "fieldId": "beneficiaryState",
+            "maxLength": 50,
+            "minLength": 1,
+            "placeholder": "Estado"
+          }
+        ]
+      }
+    },
+    "AR": {
+      "bank": {
+        "requiredFields": [
+          {
+            "fieldId": "bankAccountNumber",
+            "minLength": 22,
+            "maxLength": 22,
+            "placeholder": "Número de cuenta bancaria"
+          },
+          {
+            "fieldId": "beneficiaryCity",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Ciudad"
+          },
+          {
+            "fieldId": "beneficiaryCountry",
+            "minLength": 2,
+            "maxLength": 2,
+            "placeholder": "País"
+          },
+          {
+            "fieldId": "beneficiaryFirstName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Nombre(s)"
+          },
+          {
+            "fieldId": "beneficiaryLastName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Apellido(s)"
+          },
+          {
+            "fieldId": "beneficiaryState",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Estado"
+          },
+          {
+            "fieldId": "bankAccountType",
+            "minLength": 0,
+            "maxLength": 30,
+            "placeholder": "Tipo de cuenta"
+          },
+          {
+            "fieldId": "beneficiaryEmailAddress",
+            "minLength": 1,
+            "maxLength": 100,
+            "placeholder": "Correo electrónico"
+          },
+          {
+            "fieldId": "beneficiaryDocumentNumber",
+            "minLength": 8,
+            "maxLength": 11,
+            "placeholder": "DNI/CUIL"
+          }
+        ]
+      },
+      "wallet": {
+        "requiredFields": [
+          {
+            "fieldId": "beneficiaryCity",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Ciudad"
+          },
+          {
+            "fieldId": "beneficiaryCountry",
+            "minLength": 2,
+            "maxLength": 2,
+            "placeholder": "País"
+          },
+          {
+            "fieldId": "beneficiaryEmailAddress",
+            "minLength": 1,
+            "maxLength": 100,
+            "placeholder": "Correo electrónico"
+          },
+          {
+            "fieldId": "beneficiaryFirstName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Nombre(s)"
+          },
+          {
+            "fieldId": "beneficiaryLastName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Apellido(s)"
+          },
+          {
+            "fieldId": "beneficiaryState",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Estado"
+          },
+          {
+            "fieldId": "bankAccountNumber",
+            "minLength": 22,
+            "maxLength": 22,
+            "placeholder": "Clave Virtual Uniforme (CVU)"
+          },
+          {
+            "fieldId": "beneficiaryDocumentNumber",
+            "minLength": 8,
+            "maxLength": 11,
+            "placeholder": "DNI/CUIL"
+          }
+        ]
+      }
+    },
+    "ES": {
+      "bank": {
+        "requiredFields": [
+          {
+            "fieldId": "beneficiaryCity",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Ciudad"
+          },
+          {
+            "fieldId": "beneficiaryCountry",
+            "minLength": 2,
+            "maxLength": 2,
+            "placeholder": "País"
+          },
+          {
+            "fieldId": "beneficiaryFirstName",
+            "minLength": 1,
+            "maxLength": 35,
+            "placeholder": "Nombre(s)"
+          },
+          {
+            "fieldId": "beneficiaryLastName",
+            "minLength": 1,
+            "maxLength": 35,
+            "placeholder": "Apellido(s)"
+          },
+          {
+            "fieldId": "beneficiaryState",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Estado"
+          },
+          {
+            "fieldId": "unitaryBankAccountNumber",
+            "minLength": 24,
+            "maxLength": 24,
+            "placeholder": "IBAN"
+          }
+        ]
+      }
+    },
+    "BO": {
+      "bank": {
+        "requiredFields": [
+          {
+            "fieldId": "bankAccountNumber",
+            "minLength": 8,
+            "maxLength": 20,
+            "placeholder": "Número de cuenta bancaria"
+          },
+          {
+            "fieldId": "bankAccountType",
+            "maxLength": 0,
+            "minLength": 0,
+            "placeholder": "Tipo de cuenta"
+          },
+          {
+            "fieldId": "beneficiaryCity",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Ciudad"
+          },
+          {
+            "fieldId": "beneficiaryCountry",
+            "minLength": 2,
+            "maxLength": 2,
+            "placeholder": "País"
+          },
+          {
+            "fieldId": "beneficiaryFirstName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Nombre(s)"
+          },
+          {
+            "fieldId": "beneficiaryLastName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Apellido(s)"
+          },
+          {
+            "fieldId": "beneficiaryState",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Estado"
+          }
+        ]
+      },
+      "wallet": {
+        "requiredFields": [
+          {
+            "fieldId": "beneficiaryFirstName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Nombre(s)"
+          },
+          {
+            "fieldId": "beneficiaryLastName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Apellido(s)"
+          },
+          {
+            "fieldId": "beneficiaryCellphoneNumberWallet",
+            "minLength": 8,
+            "maxLength": 8,
+            "placeholder": "Número de celular"
+          }
+        ]
+      }
+    },
+    "BR": {
+      "electronicPayment": {
+        "requiredFields": [
+          {
+            "fieldId": "beneficiaryPix",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Ingresa la llave pix"
+          },
+          {
+            "fieldId": "beneficiaryCity",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Ciudad"
+          },
+          {
+            "fieldId": "beneficiaryCountry",
+            "minLength": 2,
+            "maxLength": 2,
+            "placeholder": "País"
+          },
+          {
+            "fieldId": "beneficiaryFirstName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Nombre(s)"
+          },
+          {
+            "fieldId": "beneficiaryDocumentNumber",
+            "minLength": 1,
+            "maxLength": 14,
+            "placeholder": "Documento de identidad CPF"
+          },
+          {
+            "fieldId": "beneficiaryLastName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Apellido(s)"
+          },
+          {
+            "fieldId": "beneficiaryState",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Estado"
+          }
+        ]
+      },
+      "bank": {
+        "requiredFields": [
+          {
+            "fieldId": "beneficiaryCity",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Ciudad"
+          },
+          {
+            "fieldId": "beneficiaryCountry",
+            "minLength": 2,
+            "maxLength": 2,
+            "placeholder": "País"
+          },
+          {
+            "fieldId": "beneficiaryFirstName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Nombre(s)"
+          },
+          {
+            "fieldId": "bankAccountNumber",
+            "minLength": 22,
+            "maxLength": 22,
+            "placeholder": "Número de cuenta bancaria"
+          },
+          {
+            "fieldId": "bankAccountType",
+            "minLength": 0,
+            "maxLength": 30,
+            "placeholder": "Tipo de cuenta"
+          },
+          {
+            "fieldId": "beneficiaryLastName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Apellido(s)"
+          },
+          {
+            "fieldId": "beneficiaryState",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Estado"
+          }
+        ]
+      }
+    },
+    "MX": {
+      "bank": {
+        "requiredFields": [
+          {
+            "fieldId": "beneficiaryCity",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Ciudad"
+          },
+          {
+            "fieldId": "beneficiaryCountry",
+            "minLength": 2,
+            "maxLength": 2,
+            "placeholder": "País"
+          },
+          {
+            "fieldId": "beneficiaryFirstName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Nombre(s)"
+          },
+          {
+            "fieldId": "beneficiaryLastName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Apellido(s)"
+          },
+          {
+            "fieldId": "beneficiaryState",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Estado"
+          },
+          {
+            "fieldId": "unitaryBankAccountNumber",
+            "minLength": 18,
+            "maxLength": 18,
+            "placeholder": "CLABE"
+          }
+        ]
+      }
+    },
+    "IT": {
+      "bank": {
+        "requiredFields": [
+          {
+            "fieldId": "beneficiaryCity",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Ciudad"
+          },
+          {
+            "fieldId": "beneficiaryCountry",
+            "minLength": 2,
+            "maxLength": 2,
+            "placeholder": "País"
+          },
+          {
+            "fieldId": "beneficiaryFirstName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Nombre(s)"
+          },
+          {
+            "fieldId": "beneficiaryLastName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Apellido(s)"
+          },
+          {
+            "fieldId": "beneficiaryState",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Estado"
+          },
+          {
+            "fieldId": "unitaryBankAccountNumber",
+            "minLength": 27,
+            "maxLength": 27,
+            "placeholder": "IBAN"
+          }
+        ]
+      }
+    },
+    "HN": {
+      "bank": {
+        "requiredFields": [
+          {
+            "fieldId": "bankAccountNumber",
+            "minLength": 0,
+            "maxLength": 9,
+            "placeholder": "Número de cuenta bancaria"
+          },
+          {
+            "fieldId": "beneficiaryCity",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Ciudad"
+          },
+          {
+            "fieldId": "beneficiaryCountry",
+            "minLength": 2,
+            "maxLength": 2,
+            "placeholder": "País"
+          },
+          {
+            "fieldId": "beneficiaryFirstName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Nombre(s)"
+          },
+          {
+            "fieldId": "beneficiaryLastName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Apellido(s)"
+          },
+          {
+            "fieldId": "beneficiaryState",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Estado"
+          }
+        ]
+      }
+    },
+    "PY": {
+      "bank": {
+        "requiredFields": [
+          {
+            "fieldId": "bankAccountNumber",
+            "minLength": 1,
+            "maxLength": 24,
+            "placeholder": "Número de cuenta bancaria"
+          },
+          {
+            "fieldId": "beneficiaryCity",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Ciudad"
+          },
+          {
+            "fieldId": "beneficiaryCountry",
+            "minLength": 2,
+            "maxLength": 2,
+            "placeholder": "País"
+          },
+          {
+            "fieldId": "beneficiaryFirstName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Nombre(s)"
+          },
+          {
+            "fieldId": "beneficiaryLastName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Apellido(s)"
+          },
+          {
+            "fieldId": "beneficiaryState",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Estado"
+          },
+          {
+            "fieldId": "beneficiaryDocumentNumber",
+            "minLength": 1,
+            "maxLength": 8,
+            "placeholder": "Cédula de identidad"
+          },
+          {
+            "fieldId": "beneficiaryDocumentType",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Tipo de documento"
+          }
+        ]
+      }
+    },
+    "DO": {
+      "bank": {
+        "requiredFields": [
+          {
+            "fieldId": "bankAccountNumber",
+            "minLength": 9,
+            "maxLength": 10,
+            "placeholder": "Número de cuenta bancaria"
+          },
+          {
+            "fieldId": "beneficiaryCity",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Ciudad"
+          },
+          {
+            "fieldId": "beneficiaryCountry",
+            "minLength": 2,
+            "maxLength": 2,
+            "placeholder": "País"
+          },
+          {
+            "fieldId": "beneficiaryFirstName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Nombre(s)"
+          },
+          {
+            "fieldId": "beneficiaryLastName",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Apellido(s)"
+          },
+          {
+            "fieldId": "beneficiaryState",
+            "minLength": 1,
+            "maxLength": 50,
+            "placeholder": "Estado"
+          },
+          {
+            "fieldId": "beneficiaryDocumentNumber",
+            "maxLength": 50,
+            "minLength": 1,
+            "placeholder": "Cédula de identidad"
+          }
+        ]
+      }
+    }
+  }
+}
