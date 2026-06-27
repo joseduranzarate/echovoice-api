@@ -193,5 +193,18 @@ async def main():
     await runner.run()
 
 
+async def run_forever():
+    # MVP stopgap: Pipecat's pipeline self-cancels after 5 min of idle. Without
+    # this loop the process exits and leaves a ~15s gap where the room has no
+    # agent. Remove once Chunk 19 switches to LiveKit Agent Worker SDK dispatch.
+    while True:
+        try:
+            await main()
+        except Exception as e:
+            logger.error(f"agent main() crashed: {e}")
+        logger.info("agent main() exited; reconnecting in 2s")
+        await asyncio.sleep(2)
+
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(run_forever())
