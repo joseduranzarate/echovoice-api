@@ -13,6 +13,11 @@ export default function SignInPage() {
     if (!signIn) return;
     setLoading(strategy === "oauth_google" ? "google" : "apple");
     try {
+      // Wipe any stale sign-in attempt from a previous failed/cancelled
+      // OAuth flow — otherwise sso() sees the existing verification and
+      // refuses to start a new redirect.
+      await signIn.reset();
+
       // signIn.sso returns { error }; it does NOT throw. Must inspect result.
       const result = await signIn.sso({
         strategy,
