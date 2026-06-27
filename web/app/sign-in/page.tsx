@@ -13,13 +13,19 @@ export default function SignInPage() {
     if (!signIn) return;
     setLoading(strategy === "oauth_google" ? "google" : "apple");
     try {
-      await signIn.authenticateWithRedirect({
+      // signIn.sso returns { error }; it does NOT throw. Must inspect result.
+      const result = await signIn.sso({
         strategy,
-        redirectUrl: "/sign-in/sso-callback",
-        redirectUrlComplete: "/",
+        redirectUrl: "/",
+        redirectCallbackUrl: "/sign-in/sso-callback",
       });
+      if (result.error) {
+        console.error("SSO flow error:", result.error);
+        setLoading(null);
+      }
+      // On success the SDK navigates the window away — no further code runs.
     } catch (err) {
-      console.error("SSO flow failed:", err);
+      console.error("SSO flow threw:", err);
       setLoading(null);
     }
   }
