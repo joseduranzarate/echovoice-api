@@ -171,11 +171,14 @@ async def main():
             session.user_id = None
             session.started_at = None
 
-    # Pipeline: mic → STT → user msg → LLM → log → TTS → speaker → assistant msg
+    # Pipeline: mic → STT → log user → context → LLM → log assistant → TTS → speaker
+    # Two TranscriptLogger taps: one before context_aggregator.user() (which
+    # consumes TranscriptionFrame and stops it propagating), one after the LLM.
     pipeline = Pipeline(
         [
             transport.input(),
             stt,
+            TranscriptLogger(session),
             context_aggregator.user(),
             llm,
             TranscriptLogger(session),
