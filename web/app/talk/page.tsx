@@ -15,7 +15,7 @@ import { Orb, type OrbState } from "../components/orb";
 import { ApiError, mintToken, type Quota } from "../lib/api";
 import { hasOnboarded } from "../lib/onboarding";
 
-type Phase = "idle" | "connecting" | "live" | "ending" | "error";
+type Phase = "idle" | "connecting" | "waking" | "live" | "ending" | "error";
 
 export default function TalkPage() {
   const router = useRouter();
@@ -102,6 +102,13 @@ export default function TalkPage() {
       });
       roomRef.current = room;
 
+      // Resolve when a remote participant (the agent) appears. Wired BEFORE
+      // room.connect() so we never miss the event if the agent is already in
+      // the room — the SDK replays ParticipantConnected for current peers.
+      const agentReady = new Promise<void>((resolve) => {
+        room.on(RoomEvent.ParticipantConnected, () => resolve());
+      });
+
       room.on(RoomEvent.TrackSubscribed, (
         track: RemoteTrack,
         _pub: RemoteTrackPublication,
@@ -133,6 +140,18 @@ export default function TalkPage() {
       await room.connect(t.url, t.token);
       await room.localParticipant.setMicrophoneEnabled(true);
 
+      // Don't go live until the agent is actually in the room — otherwise
+      // the user's first words land in a one-person room and are lost.
+      setPhase("waking");
+      if (room.remoteParticipants.size === 0) {
+        await Promise.race([
+          agentReady,
+          new Promise<void>((_, reject) =>
+            setTimeout(() => reject(new Error("Echo didn't join in time")), 12_000),
+          ),
+        ]);
+      }
+
       startedAtRef.current = Date.now();
       setElapsedS(0);
       setPhase("live");
@@ -142,6 +161,8 @@ export default function TalkPage() {
         router.push("/paywall");
         return;
       }
+      await roomRef.current?.disconnect().catch(() => {});
+      roomRef.current = null;
       setPhase("error");
       setOrbState("idle");
       setErrorMsg(e instanceof Error ? e.message : "Couldn't connect");
@@ -188,7 +209,9 @@ export default function TalkPage() {
         <Orb
           size={300}
           halo={phase === "live"}
-          state={phase === "connecting" ? "connecting" : orbState}
+          state={
+            phase === "connecting" || phase === "waking" ? "connecting" : orbState
+          }
         />
 
         <div className="h-12 flex flex-col items-center gap-1 text-center">
@@ -205,6 +228,11 @@ export default function TalkPage() {
           {phase === "connecting" && (
             <p className="text-[15px] text-[var(--color-text-muted)]">
               Connecting…
+            </p>
+          )}
+          {phase === "waking" && (
+            <p className="text-[15px] text-[var(--color-text-muted)]">
+              Waking up Echo…
             </p>
           )}
           {phase === "live" && (
@@ -250,10 +278,10 @@ export default function TalkPage() {
             {phase === "error" ? "Try again" : "Start talking"}
           </button>
         )}
-        {(phase === "live" || phase === "connecting") && (
+        {(phase === "live" || phase === "connecting" || phase === "waking") && (
           <button
             onClick={() => endCall()}
-            disabled={phase === "connecting"}
+            disabled={phase !== "live"}
             className="h-[60px] px-10 rounded-full bg-white border-[1.5px] border-[var(--color-border)] hover:border-[var(--color-ink)] disabled:opacity-50 text-[15px] font-medium transition-colors"
           >
             End conversation
