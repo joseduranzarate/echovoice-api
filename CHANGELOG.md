@@ -160,7 +160,7 @@ Blended premium user → 585 min/mo → **$15.21 cost vs $14.99 revenue**.
 - [x] **Chunk 17c** — paywall + history + settings + soft-upsell modal — 2026-06-27
 - [x] **Chunk 18** — Stripe subscriptions + webhook → Supabase *(code complete; waiting on Stripe account + env vars to test live)* — 2026-06-27
 - [ ] **Chunk 19** — session detail with corrections + live captions *(history list shipped in 17c; remaining: per-session transcript view with LLM correction pass, and word-streaming captions on /talk)*
-- [ ] **Chunk 20** — deploy: API → Render, agent → Fly Machines, web → Vercel
+- [x] **Chunk 20** — deploy: API → Railway, agent → Railway, web → Vercel — 2026-06-27
 - [ ] **Chunk 21** — PostHog + Sentry wired in
 - [ ] **Chunk 22** — first public conversation as Echo
 
@@ -434,6 +434,120 @@ For local webhook testing: `stripe listen --forward-to localhost:8000/webhooks/s
 Verified: `/billing/checkout` and `/billing/portal` return 401 without auth;
 `/webhooks/stripe` returns 400 on unsigned payloads (signature check works).
 Real charge round-trip not yet tested — needs the env vars.
+
+### 2026-06-27 — Chunk 20: first end-to-end deploy
+
+Echo is reachable on the open internet — Vercel web → Railway API → LiveKit
+Cloud → Railway agent → audio back to the browser. Round-trip verified with
+a real conversation.
+
+**Hosting choices (deviated from the plan):**
+- API → **Railway** (was Render). Picked one provider for both backend
+  services to avoid juggling two dashboards / billing surfaces
+- Agent → **Railway** (was Fly Machines). Fly required a separate credit
+  card for activation; Railway already approved. Worth revisiting at
+  Chunk 19 when proper Worker SDK dispatch lands
+- Web → Vercel (unchanged)
+
+**Repo prep:**
+- `fded7bf` — `web/` was tracked as a gitlink (submodule pointer) after a
+  stray `git init` inside it. Re-imported as a regular tree so Vercel can
+  see the source
+
+**API (Railway):**
+- Service root pointed at `/api`; healthcheck on `/health`
+- Env vars: `LIVEKIT_*`, `CLERK_SECRET_KEY`, `CLERK_AUTHORIZED_PARTIES`
+  (Vercel origin), `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
+  `CORS_ALLOW_ORIGINS` (Vercel origin), `DEFAULT_ROOM=speech-room`
+- Public domain generated via "Generate Domain" — internal `.railway.internal`
+  hostname only works for service-to-service traffic, not for browsers
+
+**Agent (Railway):**
+- Same repo, separate service with root `/agent` and Dockerfile build
+- Env vars: `LIVEKIT_*`, `DEEPGRAM_API_KEY`, `GROQ_API_KEY`,
+  `CARTESIA_API_KEY`, `CARTESIA_VOICE_ID`, `SUPABASE_*`, `ROOM_NAME=speech-room`
+- No public port — agent is a LiveKit client, not a server
+
+**Web (Vercel):**
+- Env vars: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`,
+  `NEXT_PUBLIC_API_URL` (Railway public domain)
+- `NEXT_PUBLIC_*` is baked into the JS bundle at build time — any change
+  requires a Vercel redeploy
+
+**Wiring fixes shipped during bring-up:**
+- `f8092cc` — API and agent were defaulting to different room names. Added
+  `DEFAULT_ROOM` env var on the API so both services share `speech-room`.
+  Permanent fix lands in Chunk 19 (per-call rooms via Worker SDK dispatch)
+- `40c1341` / `22e5e41` — Clerk's `signIn.sso()` returns `{error}`, it
+  doesn't throw. Inspect the result instead of wrapping in try/catch.
+  Also call `signIn.reset()` first to wipe stale verification state from
+  a previous failed/cancelled redirect — otherwise the SDK refuses to
+  start a new flow. (Commit `3bd6294` tried `authenticateWithRedirect` —
+  doesn't exist on `SignInFutureResource` in Clerk v7.5.9 future API;
+  reverted)
+- `01389b0` — Pipecat self-cancels the pipeline after 5 min idle and the
+  process exits. Railway restarts it, but the ~15s boot gap leaves the
+  room agentless — users who joined during that window heard silence.
+  Wrapped `main()` in a reconnect loop as MVP stopgap. Removed in
+  Chunk 19 when Worker SDK dispatches an agent per call
+
+**Verified:** sign-in via Google, `/talk` connects to LiveKit, agent
+responds with audio, transcripts persist, `/history` lists the session.
+
+### 2026-06-27 — Agent transcript fix (post-Chunk 20)
+
+User transcript rows were missing from Supabase — only `assistant` rows
+appeared in the table.
+
+- `5fa8f55` — Root cause: `TranscriptLogger` sat **after**
+  `context_aggregator.user()` in the pipeline. The user context aggregator
+  consumes `TranscriptionFrame` to build LLM context and does not propagate
+  it downstream, so the logger only ever saw LLM frames. Fix: added a
+  second `TranscriptLogger` instance directly after STT (it sees user
+  turns) while keeping the original placement after LLM (it still sees
+  assistant turns). No DB change needed — same table, same writer
+
+### 2026-06-30 — UX fix: wait for agent before going live on /talk
+
+User reported starting to speak before the agent was ready, losing the
+first words of every session.
+
+- `380f0dc` — `room.connect()` resolves the moment the SDP handshake
+  finishes, but the agent may still be joining (or restarting). The old
+  code flipped `phase` straight to `live` and the orb said "Listening"
+  while the room was effectively empty. Added a `waking` phase between
+  `connecting` and `live` that holds until `RoomEvent.ParticipantConnected`
+  fires (or a remote is already present when we check
+  `room.remoteParticipants`). 12-second timeout falls back to the error
+  state and disconnects the room. Copy: "Connecting…" → "Waking up Echo…"
+  → "Listening". End-conversation button stays disabled until truly live
+
+### 2026-06-30 — Plan: pause numbered chunks for UX + tier polish
+
+Stopping the Chunk 21+ track. The MVP is live and reachable; before
+adding observability or relaunching, we want a polish pass on the
+conversational experience and a sharper free-vs-premium contrast.
+
+#### Free vs Premium — current state of truth
+
+| Feature | Free | Premium |
+|---|---|---|
+| Price | $0 | $14.99/mo or $119/yr |
+| Daily cap | 3 min/day | 30 min/day (fair use) |
+| Trial credit | 15 min one-time, first 7 days | n/a |
+| Retry rule (<30s doesn't count) | ✅ | ✅ |
+| Reset | UTC midnight | UTC midnight |
+| Session history (`/history`) | ❌ | ✅ |
+| Transcripts with corrections | ❌ | 🟡 planned |
+| Live captions on `/talk` | ❌ | 🟡 planned |
+| Multiple voices | ❌ | 🟡 planned |
+| Cross-session memory | ❌ | 🟡 planned |
+| Onboarding (level + topic) | ✅ | ✅ |
+| SSO (Google/Apple) | ✅ | ✅ |
+| Stripe billing portal | n/a | ✅ |
+
+🟡 = spec'd, not yet wired. Closing those gaps is the priority of this
+ad-hoc track before resuming Chunk 21 (observability).
 
 ### Later
 
