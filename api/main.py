@@ -1,6 +1,7 @@
 import os
-from typing import Optional
+import uuid
 
+import httpx
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -20,10 +21,13 @@ LIVEKIT_URL = os.environ["LIVEKIT_URL"]
 LIVEKIT_API_KEY = os.environ["LIVEKIT_API_KEY"]
 LIVEKIT_API_SECRET = os.environ["LIVEKIT_API_SECRET"]
 
-# Single shared room — must match the agent's ROOM_NAME. MVP only supports
-# one concurrent conversation globally. Replace with per-call rooms once
-# the agent switches to LiveKit Agent Worker SDK dispatch (Chunk 19).
-DEFAULT_ROOM = os.environ.get("DEFAULT_ROOM", "speech-room")
+# On-demand agent dispatch. The agent service exposes POST /dispatch on
+# Railway's private network; the API pokes it with a fresh per-call room
+# right after minting the user's token. Rooms are single-use, so multiple
+# concurrent conversations are supported and the agent burns zero LiveKit
+# minutes while idle.
+AGENT_DISPATCH_URL = os.environ["AGENT_DISPATCH_URL"]
+DISPATCH_SECRET = os.environ["DISPATCH_SECRET"]
 
 app = FastAPI(title="speech_project api")
 
@@ -51,10 +55,7 @@ def health():
 
 
 @app.post("/token")
-def mint_token(
-    user_id: str = Depends(require_clerk_user),
-    room: Optional[str] = None,
-):
+def mint_token(user_id: str = Depends(require_clerk_user)):
     # Block here if today's quota + (eligible) trial credit are both spent.
     quota = quota_for(user_id)
     if quota.total_remaining_s <= 0:
@@ -72,7 +73,24 @@ def mint_token(
             },
         )
 
-    room_name = room or DEFAULT_ROOM
+    # Fresh single-use room per call — server-chosen so clients can't collide.
+    room_name = f"echo-{uuid.uuid4().hex[:12]}"
+
+    # Wake the agent for this room BEFORE handing the token back, so it's
+    # usually already in the room when the browser connects.
+    try:
+        r = httpx.post(
+            f"{AGENT_DISPATCH_URL}/dispatch",
+            json={"room": room_name, "user_id": user_id},
+            headers={"X-Dispatch-Secret": DISPATCH_SECRET},
+            timeout=5.0,
+        )
+        r.raise_for_status()
+    except httpx.HTTPError as e:
+        return JSONResponse(
+            status_code=503,
+            content={"error": "agent_unavailable", "detail": str(e)},
+        )
 
     # LiveKit identity is the Clerk user_id so the agent can attribute the
     # session to a real account downstream.
