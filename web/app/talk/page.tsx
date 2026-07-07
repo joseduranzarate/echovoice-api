@@ -316,7 +316,7 @@ export default function TalkPage() {
         </div>
 
         {/* Controls */}
-        <div className="flex items-center gap-4 mt-4">
+        <div className="flex items-center gap-3 sm:gap-4 mt-4">
           {canStart && (
             <button
               type="button"
@@ -369,7 +369,7 @@ export default function TalkPage() {
                 type="button"
                 onClick={() => endCall()}
                 disabled={phase !== "live"}
-                className="h-[60px] px-[52px] rounded-full border-none bg-[var(--color-btn)] text-[var(--color-btn-text)] font-bold text-[17px] cursor-pointer disabled:opacity-50 hover:-translate-y-[2px] active:translate-y-0 transition-transform"
+                className="h-[60px] px-7 sm:px-[52px] rounded-full border-none bg-[var(--color-btn)] text-[var(--color-btn-text)] font-bold text-[16px] sm:text-[17px] cursor-pointer disabled:opacity-50 hover:-translate-y-[2px] active:translate-y-0 transition-transform whitespace-nowrap"
                 style={{ boxShadow: "var(--shadow-pill)" }}
               >
                 End &amp; review

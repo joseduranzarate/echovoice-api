@@ -30,10 +30,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const name = user?.firstName ?? user?.fullName ?? "You";
 
+  // Screens that get the mobile bottom tab bar (mirrors the iOS design's
+  // Home / History / Talk / Saved / Profile tabs).
+  const isTabRoute =
+    pathname === "/" ||
+    pathname.startsWith("/history") ||
+    pathname.startsWith("/saved") ||
+    pathname.startsWith("/settings");
+
   return (
     <div className="h-dvh w-full flex items-stretch bg-[var(--color-paper)]">
-      {/* ============ SIDEBAR ============ */}
-      <aside className="h-full flex-none w-[76px] md:w-[clamp(84px,17vw,268px)] px-3 md:px-5 py-[30px] flex flex-col bg-[var(--color-rail)] border-r border-[var(--color-rail-border)]">
+      {/* ============ SIDEBAR (desktop only — mobile gets the bottom tab bar) ============ */}
+      <aside className="h-full flex-none w-[clamp(84px,17vw,268px)] px-5 py-[30px] hidden md:flex flex-col bg-[var(--color-rail)] border-r border-[var(--color-rail-border)]">
           <Link href="/" className="flex items-center gap-3 px-2 pt-0">
             <Orb size={40} className="flex-none" />
             <span className="hidden md:inline font-display text-[26px] text-[var(--color-ink)] whitespace-nowrap overflow-hidden">
@@ -141,10 +149,76 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* ============ MAIN ============ */}
-      <main className="flex-1 min-w-0 h-full overflow-y-auto bg-[var(--color-main)]">
+      <main
+        className={`flex-1 min-w-0 h-full overflow-y-auto bg-[var(--color-main)] ${
+          isTabRoute ? "pb-[112px] md:pb-0" : ""
+        }`}
+      >
         {children}
       </main>
+
+      {/* ============ MOBILE BOTTOM TAB BAR (iOS-design pill) ============ */}
+      {isTabRoute && (
+        <nav className="md:hidden fixed left-4 right-4 bottom-[max(20px,env(safe-area-inset-bottom))] z-30 h-[66px] px-3 flex items-center justify-around bg-white rounded-full border border-[#F3EAF0]"
+          style={{ boxShadow: "0 20px 44px -16px rgba(60,70,40,0.3), 0 2px 8px rgba(0,0,0,0.04)" }}
+        >
+          <TabIcon href="/" active={pathname === "/"}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z" />
+            </svg>
+          </TabIcon>
+          <TabIcon href="/history" active={pathname.startsWith("/history")}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 5h13v9H9l-4 3v-3H4z" />
+              <path d="M20 9v10l-3-2h-6" />
+            </svg>
+          </TabIcon>
+          {/* Center Talk button — raised accent circle, per the iOS design */}
+          <Link
+            href="/talk"
+            aria-label="Talk"
+            className="w-14 h-14 -mt-2 rounded-full bg-[var(--color-accent)] flex items-center justify-center"
+            style={{ boxShadow: "0 14px 28px -8px var(--color-glow)" }}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round">
+              <path d="M4 10v4M8 6v12M12 3v18M16 6v12M20 10v4" />
+            </svg>
+          </Link>
+          <TabIcon href="/saved" active={pathname.startsWith("/saved")}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z" />
+            </svg>
+          </TabIcon>
+          <TabIcon href="/settings" active={pathname.startsWith("/settings")}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 20c0-4 3.6-6 8-6s8 2 8 6" />
+            </svg>
+          </TabIcon>
+        </nav>
+      )}
     </div>
+  );
+}
+
+function TabIcon({
+  href,
+  active,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`w-[46px] h-[46px] flex items-center justify-center transition-colors ${
+        active ? "text-[var(--color-accent)]" : "text-[#BCB2BE]"
+      }`}
+    >
+      {children}
+    </Link>
   );
 }
 

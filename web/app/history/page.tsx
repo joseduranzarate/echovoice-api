@@ -122,14 +122,14 @@ function Stat({
   accent?: boolean;
 }) {
   return (
-    <div className="flex-1 min-w-[130px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[18px] px-5 py-[18px]">
+    <div className="flex-1 min-w-0 sm:min-w-[130px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[18px] px-3 sm:px-5 py-4 sm:py-[18px] text-center sm:text-left">
       <div
-        className="font-display text-[28px] tracking-[-0.02em]"
+        className="font-display text-[24px] sm:text-[28px] tracking-[-0.02em]"
         style={accent ? { color: "var(--color-accent)" } : undefined}
       >
         {value}
       </div>
-      <div className="text-[13px] text-[var(--color-text-soft)] mt-0.5">{label}</div>
+      <div className="text-[12px] sm:text-[13px] text-[var(--color-text-soft)] mt-0.5">{label}</div>
     </div>
   );
 }
