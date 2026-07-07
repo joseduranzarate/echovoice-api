@@ -12,6 +12,7 @@ from pipecat.frames.frames import (
     Frame,
     InterimTranscriptionFrame,
     LLMFullResponseEndFrame,
+    LLMRunFrame,
     LLMTextFrame,
     TranscriptionFrame,
 )
@@ -54,9 +55,22 @@ AGENT_IDENTITY = "agent-bot"
 NO_SHOW_TIMEOUT_S = 90
 
 SYSTEM_PROMPT = (
-    "You are a friendly voice companion. "
-    "Keep replies short and natural — one or two sentences, like spoken conversation."
+    "You are Echo, a friendly voice companion helping someone practice "
+    "spoken English. Keep replies short and natural — one or two sentences, "
+    "like spoken conversation. Be patient and encouraging."
 )
+
+
+def build_system_prompt(scenario: str | None) -> str:
+    if not scenario:
+        return SYSTEM_PROMPT + " Open with a warm, brief greeting and an easy question."
+    return SYSTEM_PROMPT + (
+        f' The learner chose to practice this scenario: "{scenario}". '
+        "Open the conversation in that setting, playing the natural other role "
+        "(e.g. barista, interviewer, check-in agent), and stay in the scenario. "
+        "If the learner drifts to another topic, follow their lead — the "
+        "scenario is a starting point, not a cage."
+    )
 
 
 def mint_agent_token(room_name: str) -> str:
@@ -137,7 +151,7 @@ class TranscriptLogger(FrameProcessor):
         await self.push_frame(frame, direction)
 
 
-async def run_session(room_name: str):
+async def run_session(room_name: str, scenario: str | None = None):
     """One dispatched call: join the room, run the pipeline, leave when the
     user leaves (or never shows up). Only this task touches LiveKit — the
     process itself stays up as the dispatch server."""
@@ -157,7 +171,9 @@ async def run_session(room_name: str):
     llm = GroqLLMService(api_key=GROQ_API_KEY)
     tts = CartesiaTTSService(api_key=CARTESIA_API_KEY, voice_id=CARTESIA_VOICE_ID)
 
-    context = LLMContext(messages=[{"role": "system", "content": SYSTEM_PROMPT}])
+    context = LLMContext(
+        messages=[{"role": "system", "content": build_system_prompt(scenario)}]
+    )
     context_aggregator = LLMContextAggregatorPair(context)
 
     session = SessionState()
@@ -200,6 +216,9 @@ async def run_session(room_name: str):
             logger.info(f"session started: {session.id} for user {user_id}")
         except Exception as e:
             logger.error(f"failed to create session row: {e}")
+        # Echo opens the conversation (in-scenario when one was chosen) —
+        # kick one LLM turn now that the user is in the room.
+        await task.queue_frames([LLMRunFrame()])
 
     @transport.event_handler("on_participant_disconnected")
     async def on_participant_disconnected(transport, participant_id):
@@ -263,7 +282,9 @@ async def handle_dispatch(request: web.Request) -> web.Response:
     if existing and not existing.done():
         return web.json_response({"status": "already_active", "room": room_name})
 
-    task = asyncio.create_task(run_session(room_name))
+    scenario = (body.get("scenario") or "").strip()[:200] or None
+
+    task = asyncio.create_task(run_session(room_name, scenario))
     active_rooms[room_name] = task
 
     def _cleanup(t: asyncio.Task, room: str = room_name):

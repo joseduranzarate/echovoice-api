@@ -114,7 +114,7 @@ export function HomeDashboard() {
         {PROMPTS.map((label) => (
           <Link
             key={label}
-            href="/talk"
+            href={`/talk?scenario=${encodeURIComponent(label)}`}
             className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-full px-[19px] py-[11px] text-[14px] font-semibold text-[#3C3E2E] whitespace-nowrap hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-colors"
           >
             {label}
@@ -132,7 +132,7 @@ export function HomeDashboard() {
         {SCENARIOS.map((s) => (
           <Link
             key={s.title}
-            href="/talk"
+            href={`/talk?scenario=${encodeURIComponent(`${s.title} — ${s.desc}`)}`}
             className="text-left bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl px-[22px] py-6 transition-[transform,box-shadow] duration-[180ms] hover:-translate-y-[3px]"
             style={{ boxShadow: "var(--shadow-card)" }}
           >

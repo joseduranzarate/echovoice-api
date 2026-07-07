@@ -1,8 +1,8 @@
 "use client";
 
 import { useAuth, useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import {
   Room,
   RoomEvent,
@@ -19,9 +19,18 @@ import { hasOnboarded } from "../lib/onboarding";
 type Phase = "idle" | "connecting" | "waking" | "live" | "ending" | "error";
 
 export default function TalkPage() {
+  return (
+    <Suspense fallback={null}>
+      <TalkInner />
+    </Suspense>
+  );
+}
+
+function TalkInner() {
   const router = useRouter();
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const { user } = useUser();
+  const scenario = useSearchParams().get("scenario") || undefined;
 
   const [phase, setPhase] = useState<Phase>("idle");
   const [orbState, setOrbState] = useState<OrbState>("idle");
@@ -100,7 +109,7 @@ export default function TalkPage() {
     setOrbState("connecting");
 
     try {
-      const t = await mintToken(getToken);
+      const t = await mintToken(getToken, scenario);
       setQuota(t.quota);
 
       const room = new Room({
@@ -263,6 +272,15 @@ export default function TalkPage() {
             </span>
           )}
         </div>
+
+        {/* Scenario badge — this call is a roleplay */}
+        {scenario && (
+          <div className="absolute top-[64px] left-0 right-0 flex justify-center">
+            <span className="px-4 py-1.5 rounded-full bg-[var(--color-accent-soft)] border border-[var(--color-accent)] text-[var(--color-accent)] text-[13px] font-semibold">
+              Practicing: {scenario}
+            </span>
+          </div>
+        )}
 
         {/* Orb stage */}
         <button

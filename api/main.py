@@ -10,6 +10,7 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from livekit import api
+from pydantic import BaseModel
 
 from auth import require_clerk_user
 from billing import create_checkout_session, create_portal_session
@@ -54,8 +55,17 @@ def health():
     return {"status": "ok"}
 
 
+class TokenBody(BaseModel):
+    # Optional roleplay scenario the user picked on Home; injected into the
+    # agent's system prompt for this call only.
+    scenario: str | None = None
+
+
 @app.post("/token")
-def mint_token(user_id: str = Depends(require_clerk_user)):
+def mint_token(
+    body: TokenBody | None = None,
+    user_id: str = Depends(require_clerk_user),
+):
     # Block here if today's quota + (eligible) trial credit are both spent.
     quota = quota_for(user_id)
     if quota.total_remaining_s <= 0:
@@ -76,12 +86,14 @@ def mint_token(user_id: str = Depends(require_clerk_user)):
     # Fresh single-use room per call — server-chosen so clients can't collide.
     room_name = f"echo-{uuid.uuid4().hex[:12]}"
 
+    scenario = (body.scenario or "").strip()[:200] if body else ""
+
     # Wake the agent for this room BEFORE handing the token back, so it's
     # usually already in the room when the browser connects.
     try:
         r = httpx.post(
             f"{AGENT_DISPATCH_URL}/dispatch",
-            json={"room": room_name, "user_id": user_id},
+            json={"room": room_name, "user_id": user_id, "scenario": scenario or None},
             headers={"X-Dispatch-Secret": DISPATCH_SECRET},
             timeout=5.0,
         )

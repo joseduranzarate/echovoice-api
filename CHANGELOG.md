@@ -936,6 +936,34 @@ tier table marks live captions as premium — when we enforce that, gate
 publish-side in the agent (it knows the user's plan via the session
 row) rather than hiding client-side.
 
+### 2026-07-07 — Scenario roleplay: Home chips now brief the agent
+
+The prompt chips and scenario cards on Home were decorative (static
+links to /talk). Now the choice travels the whole dispatch chain and
+becomes the call's system prompt:
+
+```
+chip "Job interview" → /talk?scenario=… → POST /token {scenario}
+  → agent /dispatch {room, user_id, scenario}
+  → per-call system prompt: "The learner chose to practice: …
+     play the natural other role … a starting point, not a cage."
+```
+
+- **Echo now speaks first** on every call (queues one `LLMRunFrame`
+  when the user joins) — in-scenario when one was picked ("Welcome to
+  the check-in desk!"), plain warm greeting otherwise. Previously the
+  agent waited silently for the user to talk.
+- /talk shows a "Practicing: …" badge when a scenario is active
+- Scenario text capped at 200 chars, sanitized on both API and agent
+- No new endpoint — `POST /token` gained an optional JSON body
+- Per-call prompts are only possible because dispatch made everything
+  per-call; the old shared-room agent had one global prompt
+- Also refreshed the base prompt: Echo now knows it's an English
+  practice partner ("patient and encouraging"), not a generic companion
+
+Foundation for audit item #4: when `/me/preferences` lands, learner
+level rides the same path into the prompt.
+
 ### Technical debt
 
 - **Consolidate Railway services into one project** (2026-07-05): API and

@@ -56,8 +56,19 @@ async function authedFetch(
   return res;
 }
 
-export async function mintToken(getToken: GetToken): Promise<TokenResponse> {
-  const res = await authedFetch("/token", getToken, { method: "POST" });
+export async function mintToken(
+  getToken: GetToken,
+  scenario?: string,
+): Promise<TokenResponse> {
+  const res = await authedFetch("/token", getToken, {
+    method: "POST",
+    ...(scenario
+      ? {
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ scenario }),
+        }
+      : {}),
+  });
   if (res.status === 429) {
     const body = (await res.json()) as QuotaExhausted;
     throw new ApiError(429, body, "quota exhausted");
