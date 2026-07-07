@@ -16,12 +16,48 @@ def _client() -> Client:
     )
 
 
+def _clerk_profile(user_id: str) -> tuple:
+    """Best-effort email/name lookup from Clerk. Returns (email, name)."""
+    try:
+        from clerk_backend_api import Clerk
+
+        with Clerk(bearer_auth=os.environ["CLERK_SECRET_KEY"]) as clerk:
+            u = clerk.users.get(user_id=user_id)
+            email = None
+            if u.email_addresses:
+                primary = next(
+                    (
+                        e
+                        for e in u.email_addresses
+                        if e.id == u.primary_email_address_id
+                    ),
+                    u.email_addresses[0],
+                )
+                email = primary.email_address
+            name = " ".join(filter(None, [u.first_name, u.last_name])) or None
+            return email, name
+    except Exception:
+        return None, None
+
+
 def ensure_user(user_id: str) -> None:
-    """JIT-create the user row on first authenticated request. Idempotent."""
-    _client().table("users").upsert(
-        {"id": user_id},
-        on_conflict="id",
-    ).execute()
+    """JIT-create the user row on first authenticated request, enriched with
+    email/name from Clerk. Self-heals rows that predate the email column."""
+    c = _client()
+    row = c.table("users").select("id, email").eq("id", user_id).execute()
+    if row.data and row.data[0].get("email"):
+        return  # exists and already enriched — the common fast path
+
+    email, name = _clerk_profile(user_id)
+    if row.data:
+        if email or name:
+            c.table("users").update({"email": email, "name": name}).eq(
+                "id", user_id
+            ).execute()
+    else:
+        c.table("users").insert(
+            {"id": user_id, "email": email, "name": name}
+        ).execute()
 
 
 _SESSION_FIELDS = (

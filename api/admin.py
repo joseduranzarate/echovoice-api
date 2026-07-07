@@ -49,8 +49,16 @@ def admin_stats() -> dict:
 
     # ── Users ────────────────────────────────────────────────────────────
     users = (
-        c.table("users").select("id, plan, created_at, level").execute().data or []
+        c.table("users")
+        .select("id, plan, created_at, level, email, name")
+        .execute()
+        .data
+        or []
     )
+    who = {
+        u["id"]: (u.get("name") or u.get("email") or u["id"][:14] + "…")
+        for u in users
+    }
     total_users = len(users)
     premium_users = sum(1 for u in users if u["plan"] == "premium")
     new_this_week = sum(
@@ -164,6 +172,7 @@ def admin_stats() -> dict:
             "top_users": [
                 {
                     "user_id": uid,
+                    "who": who.get(uid, uid[:14] + "…"),
                     "seconds": secs,
                     "plan": plan_of.get(uid, "free"),
                 }
@@ -182,5 +191,8 @@ def admin_stats() -> dict:
             "est_margin_usd": round(mrr - est_cost, 2),
             "premium_price_usd": PREMIUM_PRICE_USD,
         },
-        "recent_sessions": recent,
+        "recent_sessions": [
+            {**r, "who": who.get(r["user_id"], r["user_id"][:14] + "…")}
+            for r in recent
+        ],
     }

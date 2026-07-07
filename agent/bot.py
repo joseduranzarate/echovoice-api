@@ -173,7 +173,10 @@ class TranscriptLogger(FrameProcessor):
 
 
 async def run_session(
-    room_name: str, scenario: str | None = None, level: str | None = None
+    room_name: str,
+    scenario: str | None = None,
+    level: str | None = None,
+    dispatch_user_id: str | None = None,
 ):
     """One dispatched call: join the room, run the pipeline, leave when the
     user leaves (or never shows up). Only this task touches LiveKit — the
@@ -229,8 +232,12 @@ async def run_session(
         logger.info(f"participant joined: {participant_id}")
         if participant_id == AGENT_IDENTITY or session.is_active():
             return
-        # Participant id == Clerk user_id (set when /token minted the LiveKit JWT).
-        user_id = participant_id
+        # Session ownership comes from the dispatch payload (the API's
+        # verified Clerk user_id) — NOT from participant_id. Pipecat 1.5
+        # started passing the LiveKit participant SID (PA_...) here, which
+        # silently created phantom user rows and mis-billed usage. The
+        # participant event is only the trigger; identity comes from /token.
+        user_id = dispatch_user_id or participant_id
         try:
             await asyncio.to_thread(db.ensure_user, user_id)
             session.id = await asyncio.to_thread(db.create_session, user_id, room_name)
@@ -391,8 +398,11 @@ async def handle_dispatch(request: web.Request) -> web.Response:
 
     scenario = (body.get("scenario") or "").strip()[:200] or None
     level = (body.get("level") or "").strip()[:40] or None
+    dispatch_user_id = (body.get("user_id") or "").strip() or None
 
-    task = asyncio.create_task(run_session(room_name, scenario, level))
+    task = asyncio.create_task(
+        run_session(room_name, scenario, level, dispatch_user_id)
+    )
     active_rooms[room_name] = task
 
     def _cleanup(t: asyncio.Task, room: str = room_name):

@@ -122,8 +122,8 @@ export default function AdminPage() {
                 <div className="flex flex-col gap-2 mt-1">
                   {stats.usage.top_users.map((u) => (
                     <div key={u.user_id} className="flex items-center gap-3 text-[14px]">
-                      <span className="font-mono text-[12px] text-[var(--color-text-soft)] w-[130px] truncate">
-                        {u.user_id.slice(0, 16)}…
+                      <span className="text-[13px] text-[var(--color-text-muted)] w-[170px] truncate" title={u.user_id}>
+                        {u.who}
                       </span>
                       <span
                         className={`text-[11px] font-bold uppercase px-2 py-0.5 rounded-full ${
@@ -234,8 +234,8 @@ export default function AdminPage() {
                         minute: "2-digit",
                       })}
                     </span>
-                    <span className="font-mono text-[12px] text-[var(--color-text-soft)] w-[110px] truncate flex-none">
-                      {s.user_id.slice(0, 14)}…
+                    <span className="text-[13px] text-[var(--color-text-muted)] w-[150px] truncate flex-none" title={s.user_id}>
+                      {s.who}
                     </span>
                     <span className="flex-1 truncate">
                       {s.title ?? <span className="text-[var(--color-text-faint)]">untitled</span>}

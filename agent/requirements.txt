@@ -1,3 +1,4 @@
-pipecat-ai[deepgram,groq,cartesia,livekit,silero]
-python-dotenv
-supabase
+pipecat-ai[deepgram,groq,cartesia,livekit,silero]==1.5.0
+python-dotenv>=1.1
+supabase>=2.27,<3
+aiohttp>=3.12

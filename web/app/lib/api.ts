@@ -214,7 +214,7 @@ export type AdminStats = {
     seconds_month: number;
     avg_session_s: number;
     days: Array<{ date: string; daily_s: number; trial_s: number }>;
-    top_users: Array<{ user_id: string; seconds: number; plan: string }>;
+    top_users: Array<{ user_id: string; who: string; seconds: number; plan: string }>;
   };
   cost: {
     estimated_month_usd: number;
@@ -227,6 +227,7 @@ export type AdminStats = {
   recent_sessions: Array<{
     id: string;
     user_id: string;
+    who: string;
     started_at: string;
     duration_s: number;
     title: string | null;

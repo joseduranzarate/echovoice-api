@@ -1046,6 +1046,35 @@ not 403). Live agent status proxied from the agent's /health.
 (Clerk dashboard → Users → copy `user_…`). Optional:
 `RAILWAY_MONTHLY_USD` (default 10) for the prorated flat cost.
 
+### 2026-07-07 — BUG: phantom users from Pipecat 1.5 (found via the admin dashboard)
+
+The dashboard's first real catch, minutes after shipping: "Top talkers"
+showed ids like `PA_v2ZDjAEwNzLC…` and 19 total users when Clerk has 3.
+
+**Root cause:** the agent attributed sessions to the `participant_id`
+from `on_participant_connected`. Under Pipecat 1.4 that was the LiveKit
+*identity* (our Clerk user_id); prod's unpinned build pulled **Pipecat
+1.5**, which passes the participant **SID** (`PA_…`). Every call since
+then: created a phantom user row, billed usage to it (real users' daily
+quota never decremented), and hid sessions from their History.
+
+**Fixes:**
+1. **Agent**: session ownership now comes from the dispatch payload's
+   `user_id` (the API's Clerk-verified id) — the participant event is
+   just the trigger. Version-proof against transport changes.
+2. **Pinned `agent/requirements.txt`** (pipecat-ai==1.5.0 to match
+   prod) — the debt item that caused this, now closed.
+3. **Migration 003**: adds `users.email`/`users.name`, deletes all
+   `PA_…` phantom rows (users, sessions, transcripts, usage, phrases).
+4. **API `ensure_user`** now JIT-enriches new users with email/name
+   from Clerk (and self-heals existing rows missing email).
+5. **Admin dashboard** shows the human (name/email, full id on hover)
+   instead of raw ids in Top talkers + Recent conversations.
+
+Lesson recorded: the June "quota works" verification silently regressed
+when prod rebuilt with a newer Pipecat. Pinning + the dashboard are the
+two guards against it happening quietly again.
+
 ### Technical debt
 
 - **Consolidate Railway services into one project** (2026-07-05): API and
