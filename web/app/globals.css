@@ -2,51 +2,76 @@
 
 /* ──────────────────────────────────────────────────────────────────────────
    Echo design tokens — single source of truth.
-   Colors and typography from design_handoff_echo/README.md. Coral signals
-   warmth, NEVER alarm. Sage is RESERVED for the "Echo is speaking" cue only.
+   From the 2026-07 "Echo Web Screens" redesign: warm cream surfaces, olive
+   accent, yellow CTA. The orb gradient is olive (orbA→orbB→orbC).
    ────────────────────────────────────────────────────────────────────────── */
 @theme {
-  --color-ink: #1B1A18;
-  --color-paper: #F3F1ED;
+  --color-ink: #22241B;
+  --color-paper: #EFEDE6;
+  --color-main: #FBFAF6;
+  --color-rail: #F2F0E7;
+  --color-rail-border: #E7E0CB;
   --color-surface: #FFFFFF;
 
-  --color-coral: #DD6B4E;
-  --color-coral-deep: #C5523A;
-  --color-coral-light: #F7CBB1;
-  --color-coral-wash: #FFF6F1;
-  --color-coral-border: #F4DDD2;
+  --color-accent: #75894E;
+  --color-accent-deep: #5E7040;
+  --color-accent-soft: #E9ECD6;
+  --color-glow: rgba(124, 140, 90, 0.32);
 
-  --color-sage: #5B8C6E;
+  --color-orb-a: #CBD7A6;
+  --color-orb-b: #8A9E5C;
+  --color-orb-c: #5E7238;
 
-  --color-text-muted: #6B6760;
-  --color-text-soft: #8A857C;
-  --color-text-faint: #A8A29A;
+  --color-btn: #EFD24A;
+  --color-btn-text: #26281C;
 
-  --color-border: #E7E3DD;
-  --color-border-soft: #EDE9E3;
+  --color-gold: #AD8C46;
+  --color-gold-soft: #EEE6CD;
 
-  --font-display: "Cabinet Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "General Sans", ui-sans-serif, system-ui, sans-serif;
+  --color-text-muted: #6E6A58;
+  --color-text-soft: #8A8672;
+  --color-text-faint: #98937F;
 
-  --shadow-pill: 0 12px 28px -12px rgba(27, 26, 24, 0.5);
-  --shadow-card: 0 18px 40px -20px rgba(27, 26, 24, 0.55);
-  --shadow-orb: 0 28px 64px -20px rgba(197, 82, 58, 0.6);
+  --color-border: #EAE8DE;
+  --color-border-soft: #EFE9D6;
+
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --shadow-pill: 0 18px 36px -16px rgba(150, 130, 50, 0.42);
+  --shadow-card: 0 20px 44px -34px rgba(124, 140, 90, 0.32);
+  --shadow-orb: 0 34px 80px -24px rgba(124, 140, 90, 0.32);
 }
 
 html, body {
   background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
-  font-feature-settings: "ss01", "cv11";
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
-/* Display headings — Cabinet Grotesk with tight tracking. */
+::selection {
+  background: rgba(124, 140, 90, 0.18);
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb {
+  background: rgba(120, 116, 95, 0.28);
+  border-radius: 8px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(120, 116, 95, 0.45);
+  background-clip: content-box;
+}
+
+/* Display headings — Plus Jakarta Sans 800 with tight tracking. */
 .font-display {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
+  font-weight: 800;
   letter-spacing: -0.025em;
-  line-height: 1.04;
+  line-height: 1.08;
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -58,13 +83,13 @@ html, body {
 }
 
 @keyframes breathe-slow {
-  0%, 100% { transform: scale(0.98); opacity: 0.5; }
-  50%      { transform: scale(1.06); opacity: 0.8; }
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50%      { transform: scale(1.12); opacity: 0.85; }
 }
 
 @keyframes wave {
-  0%   { transform: scale(0.6); opacity: 0.55; }
-  100% { transform: scale(1.6); opacity: 0; }
+  0%   { transform: scale(0.72); opacity: 0.55; }
+  100% { transform: scale(1.85); opacity: 0; }
 }
 
 @keyframes spin-slow {
@@ -72,13 +97,13 @@ html, body {
 }
 
 @keyframes dot-pulse {
-  0%, 100% { opacity: 0.55; transform: scale(1); }
-  50%      { opacity: 1;    transform: scale(1.15); }
+  0%, 100% { opacity: 0.3; }
+  50%      { opacity: 1; }
 }
 
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
 }
 
 .animate-breathe        { animation: breathe 5s ease-in-out infinite; }

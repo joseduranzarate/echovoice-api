@@ -21,7 +21,8 @@ export default function BillingCancelPage() {
         <div className="w-full flex flex-col gap-2.5 pt-2">
           <Link
             href="/talk"
-            className="h-[52px] rounded-full bg-[var(--color-ink)] text-white text-[14px] font-medium flex items-center justify-center hover:-translate-y-[2px] active:translate-y-0 transition-transform"
+            className="h-[52px] rounded-full bg-[var(--color-btn)] text-[var(--color-btn-text)] text-[14px] font-bold flex items-center justify-center hover:-translate-y-[2px] active:translate-y-0 transition-transform"
+            style={{ boxShadow: "var(--shadow-pill)" }}
           >
             Back to talking
           </Link>

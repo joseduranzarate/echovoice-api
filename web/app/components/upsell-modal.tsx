@@ -36,7 +36,7 @@ export function UpsellModal({ open, onClose }: UpsellModalProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex flex-col gap-2">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-coral)]">
+          <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--color-accent)]">
             Want more time?
           </span>
           <h2 className="font-display font-bold text-[22px] leading-tight">
@@ -51,7 +51,8 @@ export function UpsellModal({ open, onClose }: UpsellModalProps) {
           <Link
             href="/paywall"
             onClick={onClose}
-            className="h-[50px] rounded-full bg-[var(--color-ink)] text-white text-[14px] font-medium flex items-center justify-center hover:-translate-y-[1px] transition-transform"
+            className="h-[50px] rounded-full bg-[var(--color-btn)] text-[var(--color-btn-text)] text-[14px] font-bold flex items-center justify-center hover:-translate-y-[1px] transition-transform"
+            style={{ boxShadow: "var(--shadow-pill)" }}
           >
             See Premium
           </Link>

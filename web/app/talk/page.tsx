@@ -12,6 +12,7 @@ import {
   type RemoteTrackPublication,
 } from "livekit-client";
 import { Orb, type OrbState } from "../components/orb";
+import { AppShell } from "../components/app-shell";
 import { ApiError, mintToken, type Quota } from "../lib/api";
 import { hasOnboarded } from "../lib/onboarding";
 
@@ -26,6 +27,7 @@ export default function TalkPage() {
   const [orbState, setOrbState] = useState<OrbState>("idle");
   const [elapsedS, setElapsedS] = useState(0);
   const [quota, setQuota] = useState<Quota | null>(null);
+  const [micOn, setMicOn] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const roomRef = useRef<Room | null>(null);
@@ -124,7 +126,7 @@ export default function TalkPage() {
           setOrbState("idle");
           return;
         }
-        // Agent is anyone-not-us. Sage tint reserved for that case.
+        // Agent is anyone-not-us.
         const meId = room.localParticipant.identity;
         const remoteTalking = speakers.some((s) => s.identity !== meId);
         if (remoteTalking) setOrbState("speaking");
@@ -139,6 +141,7 @@ export default function TalkPage() {
 
       await room.connect(t.url, t.token);
       await room.localParticipant.setMicrophoneEnabled(true);
+      setMicOn(true);
 
       // Don't go live until the agent is actually in the room — otherwise
       // the user's first words land in a one-person room and are lost.
@@ -169,6 +172,18 @@ export default function TalkPage() {
     }
   }
 
+  async function toggleMic() {
+    const room = roomRef.current;
+    if (!room || phase !== "live") return;
+    const next = !micOn;
+    try {
+      await room.localParticipant.setMicrophoneEnabled(next);
+      setMicOn(next);
+    } catch {
+      // ignore
+    }
+  }
+
   const greeting = (() => {
     const name = user?.firstName || "you";
     const hour = new Date().getHours();
@@ -177,126 +192,138 @@ export default function TalkPage() {
     return `Good evening, ${name}.`;
   })();
 
-  return (
-    <main className="flex-1 flex flex-col items-center justify-between px-6 py-10 sm:py-14">
-      <audio ref={audioElRef} autoPlay playsInline />
+  const stateLabel = (() => {
+    switch (phase) {
+      case "connecting":
+        return "Connecting…";
+      case "waking":
+        return "Waking up Echo…";
+      case "ending":
+        return "Wrapping up…";
+      case "error":
+        return errorMsg ?? "Couldn't connect";
+      case "live":
+        return orbState === "speaking"
+          ? "Echo is speaking"
+          : !micOn
+          ? "Mic is off"
+          : orbState === "listening"
+          ? "Listening…"
+          : "Take your time";
+      default:
+        return "Tap the orb to start speaking";
+    }
+  })();
 
-      {/* Header */}
-      <div className="w-full max-w-[520px] flex items-center justify-between">
-        <span className="text-[13px] uppercase tracking-[0.08em] text-[var(--color-text-soft)]">
-          {phase === "live" ? "In conversation" : "Ready"}
-        </span>
-        <div className="flex items-center gap-2 text-[13px] text-[var(--color-text-muted)]">
+  const busy = phase === "connecting" || phase === "waking";
+  const canStart = phase === "idle" || phase === "error";
+
+  return (
+    <AppShell>
+      <div className="min-h-full flex flex-col items-center justify-center px-6 py-10 relative">
+        <audio ref={audioElRef} autoPlay playsInline />
+
+        {/* Status line */}
+        <div className="absolute top-[30px] left-0 right-0 flex items-center justify-center gap-[9px] text-[var(--color-text-muted)] text-[14px] font-semibold">
+          <span
+            className="w-[7px] h-[7px] rounded-full animate-dot-pulse"
+            style={{
+              background: phase === "error" ? "#C0563E" : "var(--color-accent)",
+            }}
+          />
+          <span className={phase === "error" ? "text-[#C0563E]" : undefined}>
+            {stateLabel}
+          </span>
           {phase === "live" && (
-            <>
-              <span
-                className="w-1.5 h-1.5 rounded-full animate-dot-pulse"
-                style={{ background: "var(--color-coral)" }}
-              />
-              <span className="tabular-nums">{formatTime(elapsedS)}</span>
-            </>
+            <span className="tabular-nums text-[var(--color-text-faint)]">
+              · {formatTime(elapsedS)}
+            </span>
           )}
           {phase !== "live" && quota && (
-            <span className="tabular-nums">
-              {formatTime(quota.daily_remaining_s + quota.trial_remaining_s)} left today
+            <span className="tabular-nums text-[var(--color-text-faint)]">
+              · {formatTime(quota.daily_remaining_s + quota.trial_remaining_s)} left today
             </span>
           )}
         </div>
-      </div>
 
-      {/* Orb + status */}
-      <div className="flex flex-col items-center gap-8 my-8">
-        <Orb
-          size={300}
-          halo={phase === "live"}
-          state={
-            phase === "connecting" || phase === "waking" ? "connecting" : orbState
-          }
-        />
+        {/* Orb stage */}
+        <button
+          type="button"
+          onClick={canStart ? startCall : undefined}
+          className={`relative flex items-center justify-center border-none bg-transparent p-0 ${
+            canStart ? "cursor-pointer" : "cursor-default"
+          }`}
+          aria-label={canStart ? "Start talking" : "Conversation orb"}
+        >
+          <Orb
+            size="clamp(240px, 34vh, 360px)"
+            halo
+            state={busy ? "connecting" : phase === "live" ? orbState : "idle"}
+          />
+        </button>
 
-        <div className="h-12 flex flex-col items-center gap-1 text-center">
-          {phase === "idle" && (
+        {/* Greeting under the orb when idle */}
+        <div className="h-12 mt-8 flex flex-col items-center gap-1 text-center">
+          {canStart && (
             <>
-              <h1 className="font-display font-bold text-[clamp(22px,3.4vw,28px)]">
+              <h1 className="font-display text-[clamp(22px,3.4vw,28px)]">
                 {greeting}
               </h1>
               <p className="text-[14px] text-[var(--color-text-muted)]">
-                Tap to start a 3-minute conversation.
+                Tap the orb — or the button below — to start.
               </p>
             </>
           )}
-          {phase === "connecting" && (
-            <p className="text-[15px] text-[var(--color-text-muted)]">
-              Connecting…
-            </p>
-          )}
-          {phase === "waking" && (
-            <p className="text-[15px] text-[var(--color-text-muted)]">
-              Waking up Echo…
-            </p>
-          )}
-          {phase === "live" && (
-            <p
-              className="text-[15px] transition-colors"
-              style={{
-                color:
-                  orbState === "speaking"
-                    ? "var(--color-sage)"
-                    : orbState === "listening"
-                    ? "var(--color-coral)"
-                    : "var(--color-text-muted)",
-              }}
+        </div>
+
+        {/* Controls */}
+        <div className="flex items-center gap-4 mt-4">
+          {canStart && (
+            <button
+              type="button"
+              onClick={startCall}
+              className="h-[60px] px-[52px] rounded-full border-none bg-[var(--color-btn)] text-[var(--color-btn-text)] font-bold text-[17px] cursor-pointer hover:-translate-y-[2px] active:translate-y-0 transition-transform"
+              style={{ boxShadow: "var(--shadow-pill)" }}
             >
-              {orbState === "speaking"
-                ? "Echo is speaking"
-                : orbState === "listening"
-                ? "Listening"
-                : "Take your time"}
-            </p>
+              {phase === "error" ? "Try again" : "Start talking"}
+            </button>
           )}
-          {phase === "ending" && (
-            <p className="text-[15px] text-[var(--color-text-muted)]">
-              Wrapping up…
-            </p>
-          )}
-          {phase === "error" && (
-            <p className="text-[14px] text-[var(--color-coral-deep)]">
-              {errorMsg}
-            </p>
+          {(phase === "live" || busy || phase === "ending") && (
+            <>
+              <button
+                type="button"
+                onClick={toggleMic}
+                disabled={phase !== "live"}
+                title={micOn ? "Mute mic" : "Unmute mic"}
+                className="w-[60px] h-[60px] rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[#3C3E2E] flex items-center justify-center cursor-pointer disabled:opacity-50 hover:border-[var(--color-accent)] transition-colors"
+              >
+                {micOn ? (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="3" width="6" height="11" rx="3" />
+                    <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+                  </svg>
+                ) : (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C0563E" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="3" width="6" height="11" rx="3" />
+                    <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+                    <path d="M4 4l16 16" />
+                  </svg>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => endCall()}
+                disabled={phase !== "live"}
+                className="h-[60px] px-[52px] rounded-full border-none bg-[var(--color-btn)] text-[var(--color-btn-text)] font-bold text-[17px] cursor-pointer disabled:opacity-50 hover:-translate-y-[2px] active:translate-y-0 transition-transform"
+                style={{ boxShadow: "var(--shadow-pill)" }}
+              >
+                End &amp; review
+              </button>
+            </>
           )}
         </div>
       </div>
-
-      {/* Action */}
-      <div className="w-full max-w-[520px] flex flex-col items-center gap-4">
-        {(phase === "idle" || phase === "error") && (
-          <button
-            onClick={startCall}
-            className="h-[60px] px-10 rounded-full bg-[var(--color-ink)] text-white text-[15px] font-medium hover:-translate-y-[2px] active:translate-y-0 transition-transform"
-            style={{ boxShadow: "var(--shadow-pill)" }}
-          >
-            {phase === "error" ? "Try again" : "Start talking"}
-          </button>
-        )}
-        {(phase === "live" || phase === "connecting" || phase === "waking") && (
-          <button
-            onClick={() => endCall()}
-            disabled={phase !== "live"}
-            className="h-[60px] px-10 rounded-full bg-white border-[1.5px] border-[var(--color-border)] hover:border-[var(--color-ink)] disabled:opacity-50 text-[15px] font-medium transition-colors"
-          >
-            End conversation
-          </button>
-        )}
-        {phase === "idle" && (
-          <button
-            onClick={() => router.push("/")}
-            className="text-[13px] text-[var(--color-text-soft)] hover:text-[var(--color-ink)] transition-colors"
-          >
-            ← Back home
-          </button>
-        )}
-      </div>
-    </main>
+    </AppShell>
   );
 }
 

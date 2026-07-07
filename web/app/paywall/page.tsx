@@ -3,15 +3,15 @@
 import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
 import { useState } from "react";
-import { Orb } from "../components/orb";
+import { AppShell } from "../components/app-shell";
 import { startCheckout } from "../lib/api";
 
 const PREMIUM_PRICE = "$14.99";
 
 const PERKS = [
-  "30 minutes a day — every day",
-  "Save your conversation history",
-  "Review what to say better, after the call",
+  "30 minutes of practice a day",
+  "Full transcript & saved history",
+  "Gentle corrections after every chat",
 ];
 
 export default function PaywallPage() {
@@ -36,63 +36,66 @@ export default function PaywallPage() {
   }
 
   return (
-    <main className="flex-1 flex flex-col items-center justify-center px-6 py-12">
-      <div className="w-full max-w-[460px] flex flex-col items-center gap-8">
-        <Orb size={64} />
-
-        <div className="flex flex-col items-center gap-2 text-center">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-coral)]">
-            You&apos;ve done your three minutes
-          </span>
-          <h1 className="font-display font-bold text-[clamp(28px,5vw,38px)]">
-            Keep going with Premium.
-          </h1>
-          <p className="text-[15px] text-[var(--color-text-muted)] max-w-[360px]">
-            Free Echo is three minutes a day so it stays a habit, not a binge.
-            Premium gives you more room when you&apos;re in the flow.
-          </p>
+    <AppShell>
+      <div className="max-w-[560px] mx-auto min-h-full flex flex-col justify-center px-[30px] pt-[60px] pb-20 text-center">
+        <div className="text-[13px] font-bold tracking-[0.06em] uppercase text-[var(--color-accent)]">
+          That&apos;s today&apos;s 3 minutes
         </div>
-
-        <ul className="w-full flex flex-col gap-2.5">
-          {PERKS.map((p) => (
-            <li
-              key={p}
-              className="flex items-center gap-3 rounded-2xl bg-white border border-[var(--color-border)] px-4 py-3"
-            >
-              <span
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ background: "var(--color-coral)" }}
-              />
-              <span className="text-[14px]">{p}</span>
-            </li>
-          ))}
-        </ul>
-
-        <div className="w-full flex flex-col gap-3 pt-1">
-          <button
-            type="button"
-            onClick={handleUpgrade}
-            disabled={loading}
-            className="h-[56px] rounded-full bg-[var(--color-ink)] text-white text-[15px] font-medium hover:-translate-y-[2px] active:translate-y-0 disabled:opacity-60 disabled:hover:translate-y-0 transition-transform"
-            style={{ boxShadow: "var(--shadow-pill)" }}
-          >
-            {loading ? "Opening checkout…" : `Go Premium — ${PREMIUM_PRICE}/month`}
-          </button>
-          {error && (
-            <p className="text-[13px] text-[var(--color-coral-deep)] text-center">{error}</p>
-          )}
-          <Link
-            href="/"
-            className="text-center text-[14px] text-[var(--color-text-soft)] hover:text-[var(--color-ink)] transition-colors"
-          >
-            Come back tomorrow
-          </Link>
-        </div>
-
-        <p className="text-[12px] text-[var(--color-text-faint)] text-center">
-          Cancel anytime. We&apos;ll never make this awkward.
+        <h1 className="font-display text-[clamp(28px,3.5vw,38px)] tracking-[-0.025em] leading-[1.1] mt-3.5">
+          You&apos;re all in for today.
+        </h1>
+        <p className="text-[16px] text-[var(--color-text-muted)] mt-3 leading-[1.55]">
+          Echo resets at midnight — or unlock 30 minutes a day right now.
         </p>
+
+        <div
+          className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl p-[26px] mt-[30px] text-left"
+          style={{ boxShadow: "0 28px 60px -36px var(--color-glow)" }}
+        >
+          <div className="flex items-baseline justify-between">
+            <span className="font-display text-[23px] tracking-[-0.02em]">
+              Echo Premium
+            </span>
+            <span className="text-[14px] text-[var(--color-text-soft)]">
+              <strong className="text-[var(--color-ink)] font-bold">
+                {PREMIUM_PRICE}
+              </strong>
+              /mo
+            </span>
+          </div>
+          <div className="h-px bg-[var(--color-border-soft)] my-[18px]" />
+          <div className="flex flex-col gap-[13px]">
+            {PERKS.map((p) => (
+              <div
+                key={p}
+                className="flex items-center gap-3 text-[15px] text-[#3C3E2E]"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12l5 5 9-11" />
+                </svg>
+                {p}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleUpgrade}
+          disabled={loading}
+          className="mt-6 h-14 rounded-full border-none bg-[var(--color-btn)] text-[var(--color-btn-text)] font-bold text-[17px] cursor-pointer disabled:opacity-60 hover:-translate-y-[2px] active:translate-y-0 disabled:hover:translate-y-0 transition-transform"
+          style={{ boxShadow: "var(--shadow-pill)" }}
+        >
+          {loading ? "Opening checkout…" : "Unlock Premium"}
+        </button>
+        {error && <p className="text-[13px] text-[#C0563E] mt-3">{error}</p>}
+        <Link
+          href="/"
+          className="mt-3 h-11 flex items-center justify-center text-[var(--color-text-soft)] text-[15px] font-medium hover:text-[var(--color-ink)] transition-colors"
+        >
+          See you tomorrow
+        </Link>
       </div>
-    </main>
+    </AppShell>
   );
 }

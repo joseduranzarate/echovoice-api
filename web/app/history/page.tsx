@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
-import { useEffect, useState } from "react";
-import { Orb } from "../components/orb";
+import { useEffect, useMemo, useState } from "react";
+import { AppShell } from "../components/app-shell";
 import { listSessions, type SessionSummary } from "../lib/api";
 
 export default function HistoryPage() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const [sessions, setSessions] = useState<SessionSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
@@ -18,97 +19,146 @@ export default function HistoryPage() {
       .catch((e) => setError(e instanceof Error ? e.message : "Couldn't load history"));
   }, [isLoaded, isSignedIn, getToken]);
 
+  const stats = useMemo(() => {
+    if (!sessions) return null;
+    const weekAgo = Date.now() - 7 * 24 * 3600_000;
+    const thisWeek = sessions.filter((s) => new Date(s.started_at).getTime() >= weekAgo);
+    const weekMinutes = Math.round(
+      thisWeek.reduce((acc, s) => acc + s.duration_s, 0) / 60,
+    );
+    return {
+      thisWeek: thisWeek.length,
+      weekMinutes,
+      total: sessions.length,
+    };
+  }, [sessions]);
+
+  const filtered = useMemo(() => {
+    if (!sessions) return null;
+    if (!query.trim()) return sessions;
+    const q = query.trim().toLowerCase();
+    return sessions.filter((s) =>
+      `${formatDate(s.started_at)} ${formatRelative(s.started_at)}`
+        .toLowerCase()
+        .includes(q),
+    );
+  }, [sessions, query]);
+
   return (
-    <main className="flex-1 flex flex-col items-center px-6 py-10">
-      <div className="w-full max-w-[560px] flex flex-col gap-8">
-        {/* Header */}
-        <header className="flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <Orb size={28} />
-            <span className="font-display text-[18px] font-bold tracking-tight">
-              Echo
-            </span>
-          </Link>
-          <Link
-            href="/settings"
-            className="text-[13px] text-[var(--color-text-muted)] hover:text-[var(--color-ink)] transition-colors"
-          >
-            Settings
-          </Link>
-        </header>
+    <AppShell>
+      <div className="max-w-[1040px] mx-auto px-[clamp(22px,4vw,56px)] pt-[clamp(30px,5vw,64px)] pb-20">
+        <h1 className="font-display text-[clamp(28px,3.5vw,40px)]">History</h1>
 
-        {/* Big CTA */}
-        <section className="flex flex-col items-center gap-5 py-6">
-          <Orb size={180} halo />
-          <Link
-            href="/talk"
-            className="h-[56px] px-10 rounded-full bg-[var(--color-ink)] text-white text-[15px] font-medium flex items-center justify-center hover:-translate-y-[2px] active:translate-y-0 transition-transform"
-            style={{ boxShadow: "var(--shadow-pill)" }}
-          >
-            Start a conversation
-          </Link>
-        </section>
+        {/* Stats */}
+        <div className="flex gap-3.5 flex-wrap mt-[22px]">
+          <Stat value={stats ? String(stats.thisWeek) : "—"} label="this week" />
+          <Stat value={stats ? String(stats.weekMinutes) : "—"} label="minutes" />
+          <Stat
+            value={stats ? String(stats.total) : "—"}
+            label="conversations"
+            accent
+          />
+        </div>
 
-        {/* History list */}
-        <section className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-[18px] font-bold">Recent</h2>
-            {sessions && sessions.length > 0 && (
-              <span className="text-[12px] text-[var(--color-text-soft)]">
-                {sessions.length} session{sessions.length === 1 ? "" : "s"}
-              </span>
-            )}
+        {/* Search */}
+        <label className="flex items-center gap-[11px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[14px] px-[18px] py-3.5 mt-6 text-[var(--color-text-faint)] max-w-[440px] focus-within:border-[var(--color-accent)] transition-colors">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round">
+            <circle cx="11" cy="11" r="7" />
+            <path d="M20 20l-3.5-3.5" />
+          </svg>
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search your conversations…"
+            className="flex-1 bg-transparent border-none outline-none text-[15px] text-[var(--color-ink)] placeholder:text-[var(--color-text-faint)]"
+          />
+        </label>
+
+        <div className="text-[13px] font-bold text-[var(--color-text-soft)] mt-[34px] mb-3.5">
+          Recent conversations
+        </div>
+
+        {error && <p className="text-[14px] text-[#C0563E]">{error}</p>}
+
+        {!error && filtered === null && (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-3.5">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="h-[92px] rounded-[20px] bg-[var(--color-surface)] border border-[var(--color-border)] animate-pulse opacity-60"
+              />
+            ))}
           </div>
+        )}
 
-          {error && (
-            <p className="text-[13px] text-[var(--color-coral-deep)]">{error}</p>
-          )}
+        {filtered && filtered.length === 0 && (
+          <p className="text-[14px] text-[var(--color-text-muted)] py-4">
+            {sessions && sessions.length > 0
+              ? "No conversations match your search."
+              : "Your conversations will show up here once you start talking."}
+          </p>
+        )}
 
-          {!error && sessions === null && (
-            <div className="flex flex-col gap-2">
-              {[0, 1, 2].map((i) => (
-                <div
-                  key={i}
-                  className="h-[72px] rounded-2xl bg-white border border-[var(--color-border-soft)] animate-pulse opacity-60"
-                />
-              ))}
-            </div>
-          )}
-
-          {sessions && sessions.length === 0 && (
-            <p className="text-[14px] text-[var(--color-text-muted)] py-4">
-              Your conversations will show up here once you start talking.
-            </p>
-          )}
-
-          {sessions && sessions.length > 0 && (
-            <ul className="flex flex-col gap-2">
-              {sessions.map((s) => (
-                <li key={s.id}>
-                  <SessionRow s={s} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        {filtered && filtered.length > 0 && (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-3.5">
+            {filtered.map((s) => (
+              <SessionCard key={s.id} s={s} />
+            ))}
+          </div>
+        )}
       </div>
-    </main>
+    </AppShell>
   );
 }
 
-function SessionRow({ s }: { s: SessionSummary }) {
+function Stat({
+  value,
+  label,
+  accent = false,
+}: {
+  value: string;
+  label: string;
+  accent?: boolean;
+}) {
   return (
-    <div className="flex items-center justify-between rounded-2xl bg-white border border-[var(--color-border)] px-4 py-4">
-      <div className="flex flex-col gap-0.5">
-        <span className="text-[14px] font-medium">{formatDate(s.started_at)}</span>
-        <span className="text-[12px] text-[var(--color-text-muted)]">
-          {formatRelative(s.started_at)}
-        </span>
+    <div className="flex-1 min-w-[130px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[18px] px-5 py-[18px]">
+      <div
+        className="font-display text-[28px] tracking-[-0.02em]"
+        style={accent ? { color: "var(--color-accent)" } : undefined}
+      >
+        {value}
       </div>
-      <span className="font-display text-[16px] font-bold tabular-nums">
-        {formatDuration(s.duration_s)}
-      </span>
+      <div className="text-[13px] text-[var(--color-text-soft)] mt-0.5">{label}</div>
     </div>
+  );
+}
+
+function SessionCard({ s }: { s: SessionSummary }) {
+  return (
+    <Link
+      href={`/summary?s=${s.duration_s}`}
+      className="flex items-center gap-3.5 text-left bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[20px] p-[18px] transition-transform duration-[160ms] hover:-translate-y-[2px] hover:border-[var(--color-accent)]"
+      style={{ boxShadow: "var(--shadow-card)" }}
+    >
+      <div className="w-[46px] h-[46px] rounded-[14px] bg-[var(--color-accent-soft)] flex items-center justify-center flex-none text-[var(--color-accent)]">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M8 10h8M8 14h5" />
+          <path d="M4 5h16v11H9l-4 3v-3H4z" />
+        </svg>
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="font-bold text-[16px] tracking-[-0.01em]">
+          {formatDate(s.started_at)}
+        </div>
+        <div className="text-[13px] text-[var(--color-text-soft)] truncate mt-[3px]">
+          {formatRelative(s.started_at)}
+        </div>
+        <div className="text-[12px] text-[var(--color-text-faint)] mt-1.5">
+          {formatDuration(s.duration_s)}
+        </div>
+      </div>
+    </Link>
   );
 }
 
@@ -138,6 +188,6 @@ function formatDuration(s: number): string {
   if (s < 60) return `${s}s`;
   const m = Math.floor(s / 60);
   const r = s % 60;
-  if (r === 0) return `${m}m`;
-  return `${m}m ${r}s`;
+  if (r === 0) return `${m} min`;
+  return `${m} min ${r}s`;
 }

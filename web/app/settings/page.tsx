@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useAuth, useClerk, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Orb } from "../components/orb";
+import { AppShell } from "../components/app-shell";
 import { getQuota, openPortal, startCheckout, type Quota } from "../lib/api";
 
 export default function SettingsPage() {
@@ -30,9 +30,10 @@ export default function SettingsPage() {
     if (!quota) return;
     setBillingLoading(true);
     try {
-      const url = quota.plan === "premium"
-        ? await openPortal(getToken)
-        : await startCheckout(getToken);
+      const url =
+        quota.plan === "premium"
+          ? await openPortal(getToken)
+          : await startCheckout(getToken);
       window.location.assign(url);
     } catch {
       setBillingLoading(false);
@@ -44,81 +45,73 @@ export default function SettingsPage() {
   const isPremium = quota?.plan === "premium";
 
   return (
-    <main className="flex-1 flex flex-col items-center px-6 py-10">
-      <div className="w-full max-w-[460px] flex flex-col gap-8">
-        <header className="flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <Orb size={28} />
-            <span className="font-display text-[18px] font-bold tracking-tight">
-              Echo
-            </span>
-          </Link>
-          <Link
-            href="/talk"
-            className="text-[13px] text-[var(--color-text-muted)] hover:text-[var(--color-ink)] transition-colors"
-          >
-            Back to talk
-          </Link>
-        </header>
+    <AppShell>
+      <div className="max-w-[640px] mx-auto px-[clamp(22px,4vw,40px)] pt-[clamp(30px,5vw,64px)] pb-20">
+        {/* Identity */}
+        <div className="flex items-center gap-5">
+          <Orb size={84} className="flex-none" />
+          <div>
+            <div className="font-display text-[26px] tracking-[-0.01em]">{name}</div>
+            <div
+              className="inline-flex items-center gap-1.5 mt-2 px-[13px] py-[5px] rounded-full text-[12px] font-bold tracking-[0.03em] uppercase"
+              style={{
+                background: isPremium ? "var(--color-accent-soft)" : "var(--color-gold-soft)",
+                color: isPremium ? "var(--color-accent)" : "var(--color-gold)",
+              }}
+            >
+              <span
+                className="w-[5px] h-[5px] rounded-full"
+                style={{
+                  background: isPremium ? "var(--color-accent)" : "var(--color-gold)",
+                }}
+              />
+              {isPremium ? "Premium plan" : "Free plan"}
+            </div>
+          </div>
+        </div>
 
-        <section className="flex flex-col gap-2">
-          <h1 className="font-display font-bold text-[clamp(26px,4.5vw,32px)]">
-            Settings
-          </h1>
-          <p className="text-[14px] text-[var(--color-text-muted)]">
-            Hi {name}. Everything stays where you left it.
-          </p>
-        </section>
-
-        <Group title="Account">
-          <Row label="Email" value={email} />
+        {/* Account */}
+        <div className="text-[13px] font-bold text-[var(--color-text-soft)] mt-9 mb-3 px-1">
+          Account
+        </div>
+        <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[20px] overflow-hidden">
+          <Row label="Signed in as" value={email} />
           <Row
             label="Plan"
-            value={isPremium ? "Premium" : "Free"}
+            value={isPremium ? "Premium · 30 min/day" : "Free · 3 min/day"}
+            valueAccent
+            last
             trailing={
               <button
                 type="button"
                 onClick={handleBillingClick}
                 disabled={!quota || billingLoading}
-                className="text-[13px] font-medium text-[var(--color-coral)] hover:text-[var(--color-coral-deep)] disabled:opacity-50 transition-colors"
+                className="text-[13px] font-bold text-[var(--color-accent)] hover:text-[var(--color-accent-deep)] disabled:opacity-50 transition-colors cursor-pointer"
               >
-                {billingLoading
-                  ? "Opening…"
-                  : isPremium
-                  ? "Manage"
-                  : "Upgrade"}
+                {billingLoading ? "Opening…" : isPremium ? "Manage" : "Upgrade"}
               </button>
             }
           />
-        </Group>
+        </div>
 
-        <Group title="Practice">
-          <Row label="Daily goal" value={isPremium ? "30 minutes" : "3 minutes"} />
-          <Row label="Voice" value="Echo (default)" />
-        </Group>
+        {/* Practice */}
+        <div className="text-[13px] font-bold text-[var(--color-text-soft)] mt-[26px] mb-3 px-1">
+          Practice
+        </div>
+        <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[20px] overflow-hidden">
+          <Row label="Language" value="English" />
+          <Row label="Voice" value="Echo (default)" last />
+        </div>
 
         <button
           type="button"
           onClick={handleSignOut}
-          className="w-full h-[52px] rounded-full bg-white border-[1.5px] border-[var(--color-border)] hover:border-[var(--color-ink)] text-[14px] font-medium transition-colors"
+          className="mt-[26px] h-[50px] px-[26px] rounded-[14px] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-ink)] font-semibold text-[15px] cursor-pointer hover:border-[var(--color-accent)] transition-colors"
         >
           Sign out
         </button>
       </div>
-    </main>
-  );
-}
-
-function Group({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-2">
-      <h2 className="text-[11px] uppercase tracking-[0.08em] text-[var(--color-text-soft)] font-semibold pl-1">
-        {title}
-      </h2>
-      <div className="rounded-2xl bg-white border border-[var(--color-border)] divide-y divide-[var(--color-border-soft)]">
-        {children}
-      </div>
-    </div>
+    </AppShell>
   );
 }
 
@@ -126,18 +119,34 @@ function Row({
   label,
   value,
   trailing,
+  valueAccent = false,
+  last = false,
 }: {
   label: string;
   value: string;
   trailing?: React.ReactNode;
+  valueAccent?: boolean;
+  last?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between px-4 py-3.5">
-      <div className="flex flex-col gap-0.5">
-        <span className="text-[12px] text-[var(--color-text-muted)]">{label}</span>
-        <span className="text-[14px] font-medium">{value}</span>
-      </div>
-      {trailing}
+    <div
+      className={`flex items-center justify-between px-5 py-[17px] gap-4 ${
+        last ? "" : "border-b border-[var(--color-border-soft)]"
+      }`}
+    >
+      <span className="text-[16px]">{label}</span>
+      <span className="flex items-center gap-4 min-w-0">
+        <span
+          className={`text-[15px] truncate ${
+            valueAccent
+              ? "font-semibold text-[var(--color-accent)]"
+              : "text-[var(--color-text-soft)]"
+          }`}
+        >
+          {value}
+        </span>
+        {trailing}
+      </span>
     </div>
   );
 }

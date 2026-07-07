@@ -1,19 +1,16 @@
 /**
- * Orb — the emotional center of Echo. A glossy coral sphere that breathes.
+ * Orb — the emotional center of Echo. A glossy olive sphere that breathes.
  *
- * Sizes used in the design:
- *   - 24 px  : header logo
- *   - 56 px  : summary screen
- *   - 64 px  : sign-in
- *   - 96 px  : compact talk surfaces (live captions)
- *   - 380 px+ : hero / talk surface
- *
- * State drives motion + tint. Sage is RESERVED for the "speaking" cue only.
+ * States:
+ *   - idle / connecting : slow breathing core
+ *   - listening         : spinning conic ring around the core
+ *   - speaking          : ripple waves expanding outward
  */
 export type OrbState = "idle" | "listening" | "speaking" | "connecting";
 
 export type OrbProps = {
-  size?: number;
+  /** px number, or any CSS size (e.g. "clamp(240px,34vh,360px)"). */
+  size?: number | string;
   halo?: boolean;
   state?: OrbState;
   className?: string;
@@ -27,27 +24,6 @@ export function Orb({
 }: OrbProps) {
   const speaking = state === "speaking";
   const listening = state === "listening";
-  const connecting = state === "connecting";
-
-  const haloColor = speaking
-    ? "rgba(91,140,110,0.42)"
-    : "rgba(247,203,177,0.45)";
-
-  const coreGradient = speaking
-    ? "radial-gradient(circle at 30% 28%, #E8F1EA 0%, #B6D4C0 24%, #6FA284 60%, #4A7459 100%)"
-    : "radial-gradient(circle at 30% 28%, #FFE7D7 0%, #F7CBB1 22%, #E68262 55%, #C5523A 100%)";
-
-  const coreShadow = speaking
-    ? "0 28px 64px -20px rgba(74, 116, 89, 0.55), inset -8px -10px 28px rgba(45, 80, 60, 0.45), inset 8px 10px 24px rgba(232, 241, 234, 0.55)"
-    : "var(--shadow-orb), inset -8px -10px 28px rgba(154, 56, 35, 0.45), inset 8px 10px 24px rgba(255, 231, 215, 0.55)";
-
-  const coreAnim = speaking
-    ? "animate-breathe"
-    : listening
-    ? "animate-breathe-slow"
-    : connecting
-    ? "animate-breathe-slow"
-    : "animate-breathe";
 
   return (
     <div
@@ -57,34 +33,77 @@ export function Orb({
     >
       {halo && (
         <div
-          className="absolute inset-0 rounded-full animate-breathe-slow"
+          className="absolute rounded-full animate-breathe-slow"
           style={{
-            background: `radial-gradient(circle at 50% 50%, ${haloColor} 0%, ${haloColor.replace(/[\d.]+\)$/, "0)")} 60%)`,
-            transform: "scale(1.55)",
+            inset: "-12%",
+            background:
+              "radial-gradient(circle at 50% 42%, var(--color-glow), transparent 68%)",
+            filter: "blur(20px)",
           }}
         />
       )}
 
-      {/* Listening rings — ripple outward to show mic is hot. */}
+      {/* Listening — spinning conic ring, masked to a thin band. */}
       {listening && (
+        <div
+          className="absolute rounded-full animate-spin-slow"
+          style={{
+            inset: "-6%",
+            background:
+              "conic-gradient(from 0deg, transparent, color-mix(in srgb, var(--color-accent) 60%, transparent), transparent)",
+            WebkitMask:
+              "radial-gradient(circle, transparent 58%, #000 60%)",
+            mask: "radial-gradient(circle, transparent 58%, #000 60%)",
+          }}
+        />
+      )}
+
+      {/* Speaking — ripple waves expanding outward. */}
+      {speaking && (
         <>
           <div
-            className="absolute inset-0 rounded-full animate-wave"
-            style={{ border: "1.5px solid rgba(221,107,78,0.55)" }}
+            className="absolute inset-0 rounded-full"
+            style={{
+              border:
+                "2px solid color-mix(in srgb, var(--color-accent) 45%, transparent)",
+              animation: "wave 2.4s ease-out infinite",
+            }}
           />
           <div
-            className="absolute inset-0 rounded-full animate-wave"
+            className="absolute inset-0 rounded-full"
             style={{
-              border: "1.5px solid rgba(221,107,78,0.4)",
-              animationDelay: "0.6s",
+              border:
+                "2px solid color-mix(in srgb, var(--color-accent) 28%, transparent)",
+              animation: "wave 2.4s ease-out infinite",
+              animationDelay: "0.9s",
             }}
           />
         </>
       )}
 
+      {/* Core */}
       <div
-        className={`absolute inset-0 rounded-full ${coreAnim}`}
-        style={{ background: coreGradient, boxShadow: coreShadow }}
+        className="absolute inset-0 rounded-full animate-breathe"
+        style={{
+          background:
+            "radial-gradient(circle at 36% 30%, var(--color-orb-a) 0%, var(--color-orb-b) 50%, var(--color-orb-c) 100%)",
+          boxShadow:
+            "0 34px 80px -24px var(--color-glow), inset 0 -16px 40px rgba(60,74,30,0.45), inset 0 14px 30px rgba(240,248,220,0.55)",
+        }}
+      />
+
+      {/* Specular highlight */}
+      <div
+        className="absolute rounded-full pointer-events-none"
+        style={{
+          left: "21%",
+          top: "16%",
+          width: "32%",
+          height: "24%",
+          background:
+            "radial-gradient(circle at 42% 42%, rgba(255,255,255,0.85), rgba(255,255,255,0) 70%)",
+          filter: "blur(3px)",
+        }}
       />
     </div>
   );

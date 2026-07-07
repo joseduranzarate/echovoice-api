@@ -16,10 +16,11 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en" className="h-full antialiased">
         <head>
-          {/* Cabinet Grotesk (display) + General Sans (body) — per the brand guide. */}
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
           <link
             rel="stylesheet"
-            href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@700,800&f[]=general-sans@400,500,600,700&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
           />
         </head>
         <body className="min-h-full flex flex-col">{children}</body>
