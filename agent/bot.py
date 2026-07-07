@@ -269,9 +269,10 @@ def main():
     app.router.add_post("/dispatch", handle_dispatch)
     app.router.add_get("/health", handle_health)
     logger.info(f"agent dispatch server listening on :{PORT}")
-    # host="::" — Railway private networking is IPv6-only; binding 0.0.0.0
-    # would make agent.railway.internal unreachable from the API service.
-    web.run_app(app, host="::", port=PORT)
+    # No host → aiohttp binds ALL interfaces, IPv4 and IPv6. Railway's public
+    # edge connects over IPv4 while private networking (railway.internal) is
+    # IPv6-only, so we need both stacks listening.
+    web.run_app(app, port=PORT)
 
 
 if __name__ == "__main__":
