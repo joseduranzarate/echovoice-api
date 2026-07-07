@@ -305,3 +305,23 @@ def billing_portal(user_id: str = Depends(require_clerk_user)):
 @app.post("/webhooks/stripe")
 async def stripe_webhook(request: Request):
     return await handle_stripe_webhook(request)
+
+
+# ── Admin ───────────────────────────────────────────────────────────────────
+
+# Comma-separated Clerk user ids allowed to read /admin/stats.
+ADMIN_USER_IDS = {
+    u.strip()
+    for u in os.environ.get("ADMIN_USER_IDS", "").split(",")
+    if u.strip()
+}
+
+
+@app.get("/admin/stats")
+def get_admin_stats(user_id: str = Depends(require_clerk_user)):
+    if user_id not in ADMIN_USER_IDS:
+        # 404, not 403 — don't advertise the endpoint's existence.
+        return JSONResponse(status_code=404, content={"error": "not_found"})
+    from admin import admin_stats
+
+    return admin_stats()

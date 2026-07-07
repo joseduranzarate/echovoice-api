@@ -194,6 +194,52 @@ export async function updatePreferences(
   return (await res.json()) as Preferences;
 }
 
+// ── Admin ───────────────────────────────────────────────────────────────────
+
+export type AdminStats = {
+  live: { up: boolean; active_rooms: number };
+  users: {
+    total: number;
+    premium: number;
+    free: number;
+    new_this_week: number;
+    in_trial: number;
+    active_today: number;
+    active_month: number;
+  };
+  usage: {
+    sessions_today: number;
+    sessions_month: number;
+    seconds_today: number;
+    seconds_month: number;
+    avg_session_s: number;
+    days: Array<{ date: string; daily_s: number; trial_s: number }>;
+    top_users: Array<{ user_id: string; seconds: number; plan: string }>;
+  };
+  cost: {
+    estimated_month_usd: number;
+    vendors: Record<string, number>;
+    livekit_participant_min_used: number;
+    livekit_participant_min_free: number;
+    livekit_days_left: number | null;
+  };
+  economics: { mrr_usd: number; est_margin_usd: number; premium_price_usd: number };
+  recent_sessions: Array<{
+    id: string;
+    user_id: string;
+    started_at: string;
+    duration_s: number;
+    title: string | null;
+    correction_count: number | null;
+  }>;
+};
+
+export async function getAdminStats(getToken: GetToken): Promise<AdminStats> {
+  const res = await authedFetch("/admin/stats", getToken);
+  if (!res.ok) throw new ApiError(res.status, await res.text());
+  return (await res.json()) as AdminStats;
+}
+
 // ── Account ─────────────────────────────────────────────────────────────────
 
 export async function deleteAccount(getToken: GetToken): Promise<void> {

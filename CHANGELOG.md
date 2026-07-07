@@ -158,11 +158,11 @@ Blended premium user → 585 min/mo → **$15.21 cost vs $14.99 revenue**.
 - [x] **Chunk 17a** — design tokens + Orb + landing + custom SSO sign-in — 2026-06-27
 - [x] **Chunk 17b** — onboarding + LiveKit-wired talk + summary — 2026-06-27
 - [x] **Chunk 17c** — paywall + history + settings + soft-upsell modal — 2026-06-27
-- [x] **Chunk 18** — Stripe subscriptions + webhook → Supabase *(code complete; waiting on Stripe account + env vars to test live)* — 2026-06-27
-- [ ] **Chunk 19** — session detail with corrections + live captions *(history list shipped in 17c; remaining: per-session transcript view with LLM correction pass, and word-streaming captions on /talk)*
+- [~] **Chunk 18** — Stripe subscriptions + webhook → Supabase *(code complete 2026-06-27; STILL UNTESTED with live credentials — the only chunk with unverified code in prod)*
+- [x] **Chunk 19** — session detail with corrections + live captions — 2026-07-07 *(shipped as the endpoint-audit pass: /history/[id] transcript view + post-session correction job + data-channel captions on /talk)*
 - [x] **Chunk 20** — deploy: API → Railway, agent → Railway, web → Vercel — 2026-06-27
 - [ ] **Chunk 21** — PostHog + Sentry wired in
-- [ ] **Chunk 22** — first public conversation as Echo
+- [ ] **Chunk 22** — first public conversation as Echo *(prereqs: pricing decision, Chunk 18 live test, Chunk 21, Terms/Privacy pages)*
 
 ### 2026-06-25 — Free tier retune + cost optimization roadmap (V1 → V3)
 
@@ -1017,6 +1017,34 @@ configured; then the client plugs in without changes.
 
 **Deploy order matters:** run migration 002 first — the enriched
 `GET /sessions` selects the new columns and 500s without them.
+
+### 2026-07-07 — Admin dashboard (/admin + GET /admin/stats)
+
+Decision: custom dashboard over Datadog/Grafana — the user/minutes/plan
+data all lives in our own Supabase, and vendor spend is *estimated* from
+the rate card (real invoices stay in vendor portals; the page says so).
+
+**API** (`api/admin.py`): one aggregation endpoint, gated by
+`ADMIN_USER_IDS` env (comma-separated Clerk ids; non-admins get 404,
+not 403). Live agent status proxied from the agent's /health.
+
+**Web** (`/admin`, meadow style, inline SVG charts — no chart lib):
+- Live strip: active calls now, agent up/down, refresh button
+- Users: total / premium / free / new this week / in trial / talked today
+- Usage: sessions + minutes (today, month), avg session, stacked
+  14-day bar chart (daily quota olive, trial credit gold), top-5
+  talkers with plan badges
+- Cost: big month-to-date estimate, per-vendor stacked bar
+  (LiveKit/Deepgram/Cartesia/Groq/Railway-prorated), LiveKit free-tier
+  gauge with "days until exhausted at current pace"
+- Unit economics: MRR (premium × $14.99) and est. margin (red when
+  negative — which it will be until the pricing decision)
+- Activity feed: last 10 sessions (time, user, title, corrections,
+  duration)
+
+**New env var (API service): `ADMIN_USER_IDS`** — your Clerk user id
+(Clerk dashboard → Users → copy `user_…`). Optional:
+`RAILWAY_MONTHLY_USD` (default 10) for the prorated flat cost.
 
 ### Technical debt
 
