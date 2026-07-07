@@ -38,7 +38,7 @@ export default function HistoryPage() {
     if (!query.trim()) return sessions;
     const q = query.trim().toLowerCase();
     return sessions.filter((s) =>
-      `${formatDate(s.started_at)} ${formatRelative(s.started_at)}`
+      `${s.title ?? ""} ${s.preview ?? ""} ${formatDate(s.started_at)} ${formatRelative(s.started_at)}`
         .toLowerCase()
         .includes(q),
     );
@@ -137,7 +137,7 @@ function Stat({
 function SessionCard({ s }: { s: SessionSummary }) {
   return (
     <Link
-      href={`/summary?s=${s.duration_s}`}
+      href={`/history/${s.id}`}
       className="flex items-center gap-3.5 text-left bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[20px] p-[18px] transition-transform duration-[160ms] hover:-translate-y-[2px] hover:border-[var(--color-accent)]"
       style={{ boxShadow: "var(--shadow-card)" }}
     >
@@ -148,14 +148,19 @@ function SessionCard({ s }: { s: SessionSummary }) {
         </svg>
       </div>
       <div className="flex-1 min-w-0">
-        <div className="font-bold text-[16px] tracking-[-0.01em]">
-          {formatDate(s.started_at)}
+        <div className="font-bold text-[16px] tracking-[-0.01em] truncate">
+          {s.title ?? formatDate(s.started_at)}
         </div>
         <div className="text-[13px] text-[var(--color-text-soft)] truncate mt-[3px]">
-          {formatRelative(s.started_at)}
+          {s.preview ?? formatRelative(s.started_at)}
         </div>
         <div className="text-[12px] text-[var(--color-text-faint)] mt-1.5">
-          {formatDuration(s.duration_s)}
+          {formatDate(s.started_at)} · {formatDuration(s.duration_s)}
+          {(s.correction_count ?? 0) > 0 && (
+            <span className="text-[var(--color-accent)]">
+              {" "}· {s.correction_count} correction{s.correction_count === 1 ? "" : "s"}
+            </span>
+          )}
         </div>
       </div>
     </Link>

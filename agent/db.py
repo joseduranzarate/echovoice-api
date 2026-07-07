@@ -47,6 +47,43 @@ def append_transcript(session_id: str, role: str, text: str) -> None:
     ).execute()
 
 
+def get_transcript_rows(session_id: str) -> list[dict]:
+    """Ordered turns for the post-session analysis job."""
+    res = (
+        _client()
+        .table("transcripts")
+        .select("id, role, text")
+        .eq("session_id", session_id)
+        .order("created_at")
+        .order("id")
+        .execute()
+    )
+    return res.data or []
+
+
+def save_analysis(
+    session_id: str,
+    title: str | None,
+    preview: str | None,
+    word_count: int,
+    correction_count: int,
+) -> None:
+    _client().table("sessions").update(
+        {
+            "title": title,
+            "preview": preview,
+            "word_count": word_count,
+            "correction_count": correction_count,
+        }
+    ).eq("id", session_id).execute()
+
+
+def set_correction(transcript_id, correction: dict) -> None:
+    _client().table("transcripts").update({"correction": correction}).eq(
+        "id", transcript_id
+    ).execute()
+
+
 def end_session(session_id: str, user_id: str, duration_s: int) -> None:
     """Close the session row and roll usage forward — applies the retry rule
     and splits overflow into trial credit when eligible."""

@@ -5,7 +5,13 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Orb } from "../components/orb";
 import { AppShell } from "../components/app-shell";
-import { getQuota, openPortal, startCheckout, type Quota } from "../lib/api";
+import {
+  deleteAccount,
+  getQuota,
+  openPortal,
+  startCheckout,
+  type Quota,
+} from "../lib/api";
 
 export default function SettingsPage() {
   const { user } = useUser();
@@ -15,6 +21,8 @@ export default function SettingsPage() {
 
   const [quota, setQuota] = useState<Quota | null>(null);
   const [billingLoading, setBillingLoading] = useState(false);
+  const [deleteArmed, setDeleteArmed] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
@@ -24,6 +32,22 @@ export default function SettingsPage() {
   async function handleSignOut() {
     await signOut();
     router.push("/");
+  }
+
+  async function handleDelete() {
+    if (!deleteArmed) {
+      setDeleteArmed(true);
+      return;
+    }
+    setDeleting(true);
+    try {
+      await deleteAccount(getToken);
+      await signOut();
+      router.push("/");
+    } catch {
+      setDeleting(false);
+      setDeleteArmed(false);
+    }
   }
 
   async function handleBillingClick() {
@@ -103,13 +127,27 @@ export default function SettingsPage() {
           <Row label="Voice" value="Echo (default)" last />
         </div>
 
-        <button
-          type="button"
-          onClick={handleSignOut}
-          className="mt-[26px] h-[50px] px-[26px] rounded-[14px] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-ink)] font-semibold text-[15px] cursor-pointer hover:border-[var(--color-accent)] transition-colors"
-        >
-          Sign out
-        </button>
+        <div className="mt-[26px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[20px] overflow-hidden">
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="w-full text-left px-5 py-[17px] text-[16px] text-[var(--color-ink)] cursor-pointer border-b border-[var(--color-border-soft)] hover:bg-[var(--color-accent-soft)] transition-colors"
+          >
+            Sign out
+          </button>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="w-full text-left px-5 py-[17px] text-[16px] text-[#C5523A] cursor-pointer disabled:opacity-60 hover:bg-[#FBEDE9] transition-colors"
+          >
+            {deleting
+              ? "Deleting your account…"
+              : deleteArmed
+              ? "Are you sure? Tap again to permanently delete everything"
+              : "Delete account"}
+          </button>
+        </div>
       </div>
     </AppShell>
   );

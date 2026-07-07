@@ -1,5 +1,6 @@
 import os
 import uuid
+from typing import Optional
 
 import httpx
 from dotenv import load_dotenv
@@ -13,8 +14,23 @@ from livekit import api
 from pydantic import BaseModel
 
 from auth import require_clerk_user
-from billing import create_checkout_session, create_portal_session
-from db import list_sessions
+from billing import (
+    cancel_active_subscriptions,
+    create_checkout_session,
+    create_portal_session,
+)
+from db import (
+    create_phrase,
+    delete_phrase,
+    delete_user_data,
+    get_preferences,
+    get_session,
+    get_transcript,
+    latest_session,
+    list_phrases,
+    list_sessions,
+    update_preferences,
+)
 from limits import quota_for, seconds_until_daily_reset
 from webhooks import handle_stripe_webhook
 
@@ -58,12 +74,12 @@ def health():
 class TokenBody(BaseModel):
     # Optional roleplay scenario the user picked on Home; injected into the
     # agent's system prompt for this call only.
-    scenario: str | None = None
+    scenario: Optional[str] = None
 
 
 @app.post("/token")
 def mint_token(
-    body: TokenBody | None = None,
+    body: Optional[TokenBody] = None,
     user_id: str = Depends(require_clerk_user),
 ):
     # Block here if today's quota + (eligible) trial credit are both spent.
@@ -88,12 +104,24 @@ def mint_token(
 
     scenario = (body.scenario or "").strip()[:200] if body else ""
 
+    # Learner level (from onboarding preferences) rides along so the agent
+    # can pace the conversation.
+    try:
+        level = get_preferences(user_id).get("level")
+    except Exception:
+        level = None
+
     # Wake the agent for this room BEFORE handing the token back, so it's
     # usually already in the room when the browser connects.
     try:
         r = httpx.post(
             f"{AGENT_DISPATCH_URL}/dispatch",
-            json={"room": room_name, "user_id": user_id, "scenario": scenario or None},
+            json={
+                "room": room_name,
+                "user_id": user_id,
+                "scenario": scenario or None,
+                "level": level,
+            },
             headers={"X-Dispatch-Secret": DISPATCH_SECRET},
             timeout=5.0,
         )
@@ -147,6 +175,119 @@ def get_quota(user_id: str = Depends(require_clerk_user)):
 @app.get("/sessions")
 def get_sessions(user_id: str = Depends(require_clerk_user)):
     return {"sessions": list_sessions(user_id)}
+
+
+@app.get("/sessions/latest")
+def get_latest_session(user_id: str = Depends(require_clerk_user)):
+    session = latest_session(user_id)
+    if session is None:
+        return JSONResponse(status_code=404, content={"error": "no_sessions"})
+    return session
+
+
+@app.get("/sessions/{session_id}")
+def get_one_session(session_id: str, user_id: str = Depends(require_clerk_user)):
+    session = get_session(user_id, session_id)
+    if session is None:
+        return JSONResponse(status_code=404, content={"error": "not_found"})
+    return session
+
+
+@app.get("/sessions/{session_id}/transcript")
+def get_session_transcript(
+    session_id: str, user_id: str = Depends(require_clerk_user)
+):
+    turns = get_transcript(user_id, session_id)
+    if turns is None:
+        return JSONResponse(status_code=404, content={"error": "not_found"})
+    return {"turns": turns}
+
+
+# ── Saved phrases ───────────────────────────────────────────────────────────
+
+
+class PhraseBody(BaseModel):
+    phrase: str
+    note: Optional[str] = None
+    tag: Optional[str] = None
+    session_id: Optional[str] = None
+
+
+@app.get("/phrases")
+def get_phrases(user_id: str = Depends(require_clerk_user)):
+    return {"phrases": list_phrases(user_id)}
+
+
+@app.post("/phrases")
+def post_phrase(body: PhraseBody, user_id: str = Depends(require_clerk_user)):
+    phrase = body.phrase.strip()[:300]
+    if not phrase:
+        return JSONResponse(status_code=400, content={"error": "empty_phrase"})
+    row = create_phrase(
+        user_id,
+        phrase,
+        (body.note or "").strip()[:300] or None,
+        (body.tag or "").strip()[:40] or None,
+        body.session_id,
+    )
+    return row
+
+
+@app.delete("/phrases/{phrase_id}")
+def remove_phrase(phrase_id: str, user_id: str = Depends(require_clerk_user)):
+    if not delete_phrase(user_id, phrase_id):
+        return JSONResponse(status_code=404, content={"error": "not_found"})
+    return {"deleted": phrase_id}
+
+
+# ── Preferences ─────────────────────────────────────────────────────────────
+
+
+class PreferencesBody(BaseModel):
+    level: Optional[str] = None
+    topic: Optional[str] = None
+
+
+@app.get("/me/preferences")
+def read_preferences(user_id: str = Depends(require_clerk_user)):
+    return get_preferences(user_id)
+
+
+@app.patch("/me/preferences")
+def patch_preferences(
+    body: PreferencesBody, user_id: str = Depends(require_clerk_user)
+):
+    level = (body.level or "").strip()[:40] or None if body.level is not None else None
+    topic = (body.topic or "").strip()[:80] or None if body.topic is not None else None
+    return update_preferences(user_id, level, topic)
+
+
+# ── Account deletion ────────────────────────────────────────────────────────
+
+
+@app.delete("/me")
+def delete_account(user_id: str = Depends(require_clerk_user)):
+    """Full account deletion: Stripe subscription, Supabase rows, Clerk user."""
+    # 1. Cancel any active Stripe subscription (best-effort).
+    try:
+        cancel_active_subscriptions(user_id)
+    except Exception:
+        pass  # no Stripe config in dev, or no subscription — fine
+
+    # 2. Remove all Supabase data.
+    delete_user_data(user_id)
+
+    # 3. Delete the Clerk user so they can't sign back into a ghost account.
+    try:
+        from clerk_backend_api import Clerk
+
+        with Clerk(bearer_auth=os.environ["CLERK_SECRET_KEY"]) as clerk:
+            clerk.users.delete(user_id=user_id)
+    except Exception:
+        # Data is already gone; a stale Clerk user just re-onboards fresh.
+        pass
+
+    return {"deleted": user_id}
 
 
 @app.post("/billing/checkout")

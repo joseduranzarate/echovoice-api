@@ -964,6 +964,60 @@ chip "Job interview" → /talk?scenario=… → POST /token {scenario}
 Foundation for audit item #4: when `/me/preferences` lands, learner
 level rides the same path into the prompt.
 
+### 2026-07-07 — Endpoint audit items #1–#4 + #6 built (transcripts, analysis, phrases, prefs, deletion)
+
+Everything from the audit except iOS wiring, in one pass.
+
+**Migration** (`db/migrations/002_analysis_phrases_preferences.sql` —
+run in the Supabase SQL editor BEFORE deploying this code):
+- `sessions` + title, preview, word_count, correction_count
+- `transcripts` + correction jsonb
+- `users` + level, topic
+- new `phrases` table (+ index)
+
+**API — 8 new endpoints** (all Clerk-authed, ownership-checked):
+- `GET /sessions/latest`, `GET /sessions/{id}`,
+  `GET /sessions/{id}/transcript`; `GET /sessions` now returns
+  title/preview/word_count/correction_count
+- `GET/POST /phrases`, `DELETE /phrases/{id}`
+- `GET/PATCH /me/preferences`
+- `DELETE /me` — cancels Stripe sub, wipes all Supabase rows, deletes
+  the Clerk user (each step best-effort in that order)
+- `/token` now reads the stored level and sends it to dispatch
+- Compat fix: local API venv is Python 3.9 → `Optional[]` not `X | None`
+  in FastAPI/pydantic signatures (prod runs newer, but local must import)
+
+**Agent — post-session analysis job**: after `end_session`, one Groq
+call (JSON mode, `llama-3.3-70b-versatile`) produces a 3–6 word title +
+up to 5 gentle corrections mapped back to specific transcript rows;
+word count and preview computed in Python. Best-effort: a failure just
+leaves the session untitled. Also: level-based pacing in the system
+prompt (Beginner/Intermediate/Advanced clauses, case-normalized to
+match web's lowercase ids).
+
+**Web**:
+- New `/history/[id]` transcript page — design's bubble layout, user
+  turns in accent bubbles, Echo turns with mini-orb, "Gentle correction"
+  callouts with a **Save phrase** button (→ POST /phrases)
+- Summary now loads `/sessions/latest`: real duration, title chip,
+  words spoken, corrections count, "See transcript" CTA
+- History cards show title + preview + corrections count, link to the
+  transcript page; search includes titles
+- /saved lists real phrases (delete with optimistic rollback, link back
+  to the source conversation)
+- Onboarding persists level/topic via PATCH /me/preferences (localStorage
+  stays as the routing gate)
+- Settings: Sign out + **Delete account** (two-tap confirm) in a
+  grouped card
+
+**iOS**: `EchoAPI.swift` — full client (Codable models + every endpoint,
+snake_case decoding, typed 429/503 errors) behind a `TokenProvider`
+protocol. Screens stay on demo data until the Clerk iOS SDK is
+configured; then the client plugs in without changes.
+
+**Deploy order matters:** run migration 002 first — the enriched
+`GET /sessions` selects the new columns and 500s without them.
+
 ### Technical debt
 
 - **Consolidate Railway services into one project** (2026-07-05): API and

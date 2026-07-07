@@ -61,10 +61,31 @@ SYSTEM_PROMPT = (
 )
 
 
-def build_system_prompt(scenario: str | None) -> str:
+LEVEL_PACING = {
+    "Beginner": (
+        " The learner is a beginner: use simple vocabulary, short sentences, "
+        "speak a little slower in phrasing, and never use idioms without "
+        "explaining them."
+    ),
+    "Intermediate": (
+        " The learner is intermediate: everyday vocabulary is fine, gently "
+        "stretch them with occasional new phrases."
+    ),
+    "Advanced": (
+        " The learner is advanced: speak naturally, use idioms and nuance, "
+        "and challenge them with follow-up questions."
+    ),
+}
+
+
+def build_system_prompt(scenario: str | None, level: str | None = None) -> str:
+    prompt = SYSTEM_PROMPT
+    pacing = LEVEL_PACING.get((level or "").strip().capitalize())
+    if pacing:
+        prompt += pacing
     if not scenario:
-        return SYSTEM_PROMPT + " Open with a warm, brief greeting and an easy question."
-    return SYSTEM_PROMPT + (
+        return prompt + " Open with a warm, brief greeting and an easy question."
+    return prompt + (
         f' The learner chose to practice this scenario: "{scenario}". '
         "Open the conversation in that setting, playing the natural other role "
         "(e.g. barista, interviewer, check-in agent), and stay in the scenario. "
@@ -151,7 +172,9 @@ class TranscriptLogger(FrameProcessor):
         await self.push_frame(frame, direction)
 
 
-async def run_session(room_name: str, scenario: str | None = None):
+async def run_session(
+    room_name: str, scenario: str | None = None, level: str | None = None
+):
     """One dispatched call: join the room, run the pipeline, leave when the
     user leaves (or never shows up). Only this task touches LiveKit — the
     process itself stays up as the dispatch server."""
@@ -172,7 +195,7 @@ async def run_session(room_name: str, scenario: str | None = None):
     tts = CartesiaTTSService(api_key=CARTESIA_API_KEY, voice_id=CARTESIA_VOICE_ID)
 
     context = LLMContext(
-        messages=[{"role": "system", "content": build_system_prompt(scenario)}]
+        messages=[{"role": "system", "content": build_system_prompt(scenario, level)}]
     )
     context_aggregator = LLMContextAggregatorPair(context)
 
@@ -239,6 +262,9 @@ async def run_session(room_name: str, scenario: str | None = None):
                 session.id = None
                 session.user_id = None
                 session.started_at = None
+            # Post-session analysis (title, corrections, word count) —
+            # independent task so it survives the pipeline teardown below.
+            asyncio.create_task(analyze_session(sid))
         # Per-call room: the call is over — tear the pipeline down and leave.
         await task.cancel(reason="user left")
 
@@ -258,6 +284,87 @@ async def run_session(room_name: str, scenario: str | None = None):
     finally:
         watchdog.cancel()
         logger.info(f"session task for room '{room_name}' finished")
+
+
+# ── Post-session analysis ───────────────────────────────────────────────────
+# One Groq call after each session: a short title + gentle corrections for
+# the learner's turns. Best-effort — a failure just leaves the session
+# without a title, exactly like before this feature existed.
+
+import json
+
+import aiohttp
+
+GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
+GROQ_MODEL = os.environ.get("GROQ_ANALYSIS_MODEL", "llama-3.3-70b-versatile")
+
+ANALYSIS_PROMPT = """You are reviewing an English practice conversation between a learner (user) and a voice tutor (assistant).
+
+Given the numbered learner turns, return JSON with:
+- "title": a short natural title for the conversation, 3-6 words, no quotes
+- "corrections": array of at most 5 items, ONLY for turns with a real grammar or word-choice mistake, each {"n": <turn number>, "from": "<the mistaken fragment, quoted verbatim>", "to": "<the corrected fragment>"}
+
+Do not invent corrections for correct sentences. Respond with JSON only."""
+
+
+async def analyze_session(session_id: str) -> None:
+    try:
+        rows = await asyncio.to_thread(db.get_transcript_rows, session_id)
+        user_rows = [r for r in rows if r["role"] == "user"]
+        if not user_rows:
+            return
+
+        word_count = sum(len(r["text"].split()) for r in user_rows)
+        preview = f"“{user_rows[0]['text'][:80]}”"
+
+        numbered = "\n".join(f"{i + 1}. {r['text']}" for i, r in enumerate(user_rows))
+        payload = {
+            "model": GROQ_MODEL,
+            "response_format": {"type": "json_object"},
+            "messages": [
+                {"role": "system", "content": ANALYSIS_PROMPT},
+                {"role": "user", "content": numbered},
+            ],
+            "temperature": 0.2,
+        }
+
+        async with aiohttp.ClientSession() as http:
+            async with http.post(
+                GROQ_CHAT_URL,
+                json=payload,
+                headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
+                timeout=aiohttp.ClientTimeout(total=30),
+            ) as resp:
+                resp.raise_for_status()
+                data = await resp.json()
+
+        result = json.loads(data["choices"][0]["message"]["content"])
+        title = (result.get("title") or "").strip()[:80] or None
+        corrections = result.get("corrections") or []
+
+        applied = 0
+        for c in corrections:
+            try:
+                idx = int(c["n"]) - 1
+                if 0 <= idx < len(user_rows) and c.get("from") and c.get("to"):
+                    await asyncio.to_thread(
+                        db.set_correction,
+                        user_rows[idx]["id"],
+                        {"from": str(c["from"])[:200], "to": str(c["to"])[:200]},
+                    )
+                    applied += 1
+            except (KeyError, ValueError, TypeError):
+                continue
+
+        await asyncio.to_thread(
+            db.save_analysis, session_id, title, preview, word_count, applied
+        )
+        logger.info(
+            f"analysis done for {session_id}: title={title!r}, "
+            f"{applied} corrections, {word_count} words"
+        )
+    except Exception as e:
+        logger.error(f"analysis failed for session {session_id}: {e}")
 
 
 # ── Dispatch server ─────────────────────────────────────────────────────────
@@ -283,8 +390,9 @@ async def handle_dispatch(request: web.Request) -> web.Response:
         return web.json_response({"status": "already_active", "room": room_name})
 
     scenario = (body.get("scenario") or "").strip()[:200] or None
+    level = (body.get("level") or "").strip()[:40] or None
 
-    task = asyncio.create_task(run_session(room_name, scenario))
+    task = asyncio.create_task(run_session(room_name, scenario, level))
     active_rooms[room_name] = task
 
     def _cleanup(t: asyncio.Task, room: str = room_name):

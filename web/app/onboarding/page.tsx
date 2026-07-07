@@ -1,8 +1,10 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Orb } from "../components/orb";
+import { updatePreferences } from "../lib/api";
 import { writeOnboarding, type OnboardingAnswers } from "../lib/onboarding";
 
 type Level = OnboardingAnswers["level"];
@@ -23,6 +25,7 @@ const TOPICS: Array<{ id: Topic; label: string; hint: string }> = [
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { getToken } = useAuth();
   const [step, setStep] = useState<0 | 1>(0);
   const [level, setLevel] = useState<Level | null>(null);
   const [topic, setTopic] = useState<Topic | null>(null);
@@ -36,6 +39,9 @@ export default function OnboardingPage() {
     setTopic(t);
     if (!level) return;
     writeOnboarding({ level, topic: t });
+    // Persist server-side too — the agent paces the conversation by level.
+    // Best-effort: localStorage is the gate, the server copy is the upgrade.
+    void updatePreferences(getToken, { level, topic: t }).catch(() => {});
     setTimeout(() => router.push("/talk"), 220);
   }
 

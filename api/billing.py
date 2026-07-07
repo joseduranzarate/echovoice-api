@@ -72,6 +72,24 @@ def create_checkout_session(user_id: str, email: Optional[str] = None) -> str:
     return session.url
 
 
+def cancel_active_subscriptions(user_id: str) -> None:
+    """Cancel any active subscription for this user (account deletion)."""
+    row = (
+        _client()
+        .table("subscriptions")
+        .select("stripe_customer_id")
+        .eq("user_id", user_id)
+        .execute()
+    )
+    if not row.data or not row.data[0].get("stripe_customer_id"):
+        return
+    subs = stripe.Subscription.list(
+        customer=row.data[0]["stripe_customer_id"], status="active"
+    )
+    for sub in subs.auto_paging_iter():
+        stripe.Subscription.cancel(sub.id)
+
+
 def create_portal_session(user_id: str) -> str:
     """Return the Stripe Customer Portal URL for managing/cancelling."""
     row = (
