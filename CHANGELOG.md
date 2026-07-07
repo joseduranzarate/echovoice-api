@@ -549,6 +549,385 @@ conversational experience and a sharper free-vs-premium contrast.
 🟡 = spec'd, not yet wired. Closing those gaps is the priority of this
 ad-hoc track before resuming Chunk 21 (observability).
 
+### 2026-07-01 — LiveKit free tier exhausted; agent paused
+
+Woke up to a LiveKit "quota reached" email. Diagnosed the cause and paused
+the agent to stop the bleeding. Not from user traffic — from architecture.
+
+**Root cause:** the agent's 5-min reconnect loop (shipped 2026-06-27,
+commit `01389b0`) keeps the bot in the LiveKit room 24/7. LiveKit meters
+per participant-minute, so an idle agent burns quota indefinitely.
+~1,440 participant-min/day × 3.5 days = 5,040 min → exactly the free
+tier ceiling. User's actual testing was <100 min.
+
+**Action taken:** removed the active deployment on the Railway agent
+service (`echovoice-api` service with root `/agent`) — "Service is
+offline / no active deployment". API service stayed up (doesn't touch
+LiveKit until `/token` is called).
+
+**Free tier resets 2026-07-01.** July is a fresh 5,000 min.
+
+**Blocker:** must land LiveKit Agent Worker SDK dispatch before turning
+the agent back on. Under that model the agent process registers with
+LiveKit as a Worker and only gets dispatched into a room when a user
+call actually starts — zero idle minutes. This kills two birds:
+
+1. LiveKit meter goes to actual-usage-only
+2. Removes the single shared `speech-room` limitation (was blocking
+   more than 1 concurrent user globally, was tagged for the future
+   Chunk 19 rewrite anyway)
+
+Bumped this in front of Chunk 21 (observability) in the queue.
+
+### 2026-07-01 — Design refresh in flight (external template pass)
+
+Paused implementation work while the user runs a design pass with an
+external template. Delivered a self-contained brief prompt covering:
+
+- Product principles (orb-as-interface, no gamification, coral warmth,
+  sage green reserved for "Echo is speaking" cue)
+- Full tier feature list (Free vs Premium, shipped vs planned)
+- All 10 routes to design (`/`, `/sign-in`, `/onboarding`, `/talk`,
+  `/summary`, `/history`, `/history/[id]`, `/paywall`, `/settings`,
+  billing return targets)
+- Component library scope (`<Orb>`, `<Button>`, `<QuotaPill>`,
+  `<SessionRow>`, `<CorrectionCallout>`, `<UpsellModal>`,
+  `<VoicePicker>`, `<AuthCard>`)
+- Anti-requirements (no streaks/XP/leaderboards/chat bubbles/mascot/
+  fake urgency)
+
+Brief is a one-shot handoff — not committed to the repo since it's a
+working artifact for a different tool.
+
+### 2026-07-02 — Pricing analysis: current V1 model is unprofitable
+
+Ran the numbers on the current pricing (Free 3 min/day, Premium
+$14.99/mo at 30 min/day) against the V1 hosted cost stack ($0.026/min).
+Result: **−$8.41 per premium user per month.**
+
+**Where the loss comes from (per premium user):**
+- Premium usage cost @ 585 min/mo blended: $15.21
+- Free-tier subsidy (9 free users per 1 premium × $0.91/mo blended): $8.19
+- Loaded cost: $23.40 vs $14.99 revenue
+
+**Scenarios explored** (with realistic utilization blend — lower caps
+have higher % utilization):
+
+| # | Free | Premium cap | Price | Net/premium/mo |
+|---|---|---|---|---|
+| 1 (current) | 3 min/day | 30 min/day | $14.99 | −$8.41 |
+| 3 | 1 min/day | 15 min/day | $14.99 | +$2.90 |
+| 5 | 1 min/day | 20 min/day | $19.99 | +$5.56 |
+| 9 | 1 min/day | 10 min/day | $14.99 | +$5.24 |
+| 6 | trial-only (no daily free) | 15 min/day | $14.99 | +$5.63 |
+
+**Hybrid model proposed** (subscription + credit boosters):
+
+| Layer | Price | Purpose |
+|---|---|---|
+| Free | 15-min trial credit, 7-day window | Acquisition |
+| Premium sub | $14.99/mo, 10 min/day fair use | Habit lock + predictable MRR |
+| Booster credits (NEW) | $5 = 40 min / $15 = 150 min | Captures power-user overage + micro-conversion from lapsed free |
+
+**Why hybrid over pure credits:** language practice is a habit product.
+Habit products need low pain-of-paying (sub psychology). Credits alone
+would create meter-running anxiety, kill daily return, halve LTV.
+Boosters as a *top-up* fix the power-user cost sink without breaking
+habit formation.
+
+**No code changes yet.** Constants in `api/limits.py` still hold the
+old numbers. Decision deferred until design pass lands — new tier
+UX/copy is easier to design after the visual system is refreshed.
+
+**Open questions:**
+- Pick between Scenario 9 (10 min/day, $14.99, cheapest & positive)
+  and Scenario 5 (20 min/day, $19.99, more premium headroom)
+- Decide if boosters are day-1 or fast-follow
+- Adjust free tier: keep 3 min/day (retention-focused) or drop to
+  1 min/day (conversion-focused) or trial-only (margin-focused)
+
+### 2026-07-03 — Web redesign shipped (meadow design system)
+
+Implemented the external design pass ("Echo Web Screens.html") across the
+entire `/web` app. Full visual replacement, zero endpoint changes — every
+screen still talks to the same FastAPI routes.
+
+**New design system** (`globals.css` + `layout.tsx`):
+- Warm cream palette: paper `#EFEDE6`, olive accent `#75894E`,
+  yellow CTA `#EFD24A`, gold plan-badge `#AD8C46`
+- Plus Jakarta Sans everywhere (replaces Cabinet Grotesk + General Sans)
+- Orb is now olive (`#CBD7A6 → #8A9E5C → #5E7238`) with specular
+  highlight; spin-ring while listening, ripple waves while speaking
+
+**New app shell:** persistent left sidebar (Home / History / Talk /
+Saved / Profile) with real quota in the free-plan upgrade card and the
+Clerk user in the profile chip. Collapses to an icon rail below `md`.
+
+**Screens:**
+- `/` — signed-in users get a Home dashboard (greeting, dark Talk hero,
+  prompt chips, scenario grid); signed-out keeps the landing, re-tinted
+- `/talk` — new orb stage; all LiveKit logic untouched; added a working
+  mic-mute toggle (design's mic button, wired to `setMicrophoneEnabled`)
+- `/history` — stats row (this week / minutes / conversations) + card
+  grid, all computed from `/sessions`; client-side date search
+- `/settings` — Profile screen layout; `/paywall` — premium card with
+  perks; `/summary` — transcript-style header, real data only
+- `/saved` — new page, honest empty state (no phrases endpoint yet)
+
+**Desktop layout fix (same day):** shell is full-width so the sidebar
+hugs the left edge on any monitor; every screen's content is capped and
+centered inside `main` (Settings 640px, Summary 760px, Home/History/
+Saved 1040px). Card grids use `auto-fill minmax(300px,1fr)`.
+
+**Design gaps deferred** (need backend work):
+- Saved phrases → no API; page ships with empty state
+- Transcript view with corrections → transcripts exist in Supabase but
+  no client-facing endpoint yet
+- Scenario/prompt chips are static; all route to `/talk`
+
+### 2026-07-03 — iOS app scaffold (SwiftUI, design replica)
+
+New `ios/` folder: native SwiftUI replica of "Echo Mobile Screen.html"
+(the mobile companion design, same meadow palette). Built with xcodegen
+(`project.yml` → `EchoMobile.xcodeproj`), iOS 17+, builds clean and runs
+in the iPhone 17 simulator.
+
+**All 13 screens replicated:** Splash (pink bloom-blob → orb formation),
+Welcome, Auth (SSO buttons), 2-question Setup, Home, Talk (orb stage with
+idle/listening/speaking cycle), Live transcript (word-by-word playback
+with pause/resume), Session detail (gentle corrections), Summary,
+Paywall, History, Saved, Profile — plus the premium upsell sheet and the
+floating pill tab bar.
+
+**Structure:** `Router` (screen enum + transcript playback engine),
+`Theme` (palette + Plus Jakarta Sans static weights, bundled),
+`Components` (OrbView / CTA pill / tab bar), one file per screen group.
+
+**Status: UI-only.** Demo data from the design mock; no Clerk, LiveKit,
+or API wiring. Auth buttons just advance; quota is hardcoded. Wiring the
+iOS app to the real backend is a future chunk.
+
+### 2026-07-03/04 — Agent re-enabled: on-demand dispatch, per-call rooms
+
+The fix for the 2026-07-01 LiveKit quota burn. Replaces the
+always-connected agent with **on-demand dispatch**: the agent joins a
+LiveKit room only when a call actually starts, and leaves when it ends.
+
+---
+
+#### DIAGNOSIS — Before (the architecture that burned the free tier)
+
+```
+                        LiveKit Cloud
+                     ┌───────────────────┐
+                     │   "speech-room"   │
+                     │   (one shared     │
+  You ──/token────►  │    room, always   │  ◄──── Agent
+  (only when you     │    the same)      │        joins at startup,
+   want to talk)     └───────────────────┘        NEVER leaves
+                                                  (loop rejoins it
+                                                   every 5 min)
+
+  ⏱ Meter: 24 h/day  →  ~1,440 participant-min/day
+                     →  × 3.5 days ≈ 5,000 min = the entire free tier
+  Actual conversation time in that period: < 100 min
+```
+
+How each piece contributed:
+
+1. **LiveKit bills per participant-minute** — anyone connected to a
+   room counts, talking or not. An idle agent is still a participant.
+2. **The agent joined `speech-room` at startup and never left.** Room
+   name came from its `ROOM_NAME` env var, hardcoded to one value.
+3. **The `run_forever()` reconnect loop** (commit `01389b0`,
+   2026-06-27) was the direct culprit. Pipecat self-cancels its
+   pipeline after ~5 min of idle — which would have let the agent drop
+   out — but the loop rejoined 2 s later, forever. It was shipped as an
+   MVP stopgap to fix "agent disappears mid-day, calls go dead"; the
+   billing consequence wasn't understood until the quota email.
+4. **The old `/token` had a `?room=` param** (`room_name = room or
+   DEFAULT_ROOM`). Tokens could target any room, but the agent only
+   ever sat in its own `ROOM_NAME` room — so a custom room was an
+   empty room unless you also edited the agent's env and restarted it
+   (the manual two-room test from June). Practical result: one
+   concurrent conversation globally, and any signed-in user could mint
+   a token for an arbitrary room name (mild security smell).
+
+#### AFTER — on-demand dispatch
+
+```
+  You ──/token───► API ──"wake up, room echo-a1b2c3"──► Agent (dispatch server,
+                    │         (private network)          in NO LiveKit room,
+                    │ mints fresh room name              waiting to be called —
+                    ▼                                    costs 0 min while idle)
+             ┌───────────────────┐
+             │  "echo-a1b2c3"    │   ◄──── Agent joins ONLY now
+   You join  │  (new room, used  │
+             │   for this call   │
+             │   only)           │
+             └───────────────────┘
+                      │
+              you hang up (or never show up for 90 s)
+                      ▼
+              agent leaves, room dies
+
+  ⏱ Meter: only during actual conversation
+  ✓ One room per call → concurrent users supported
+  ✓ Room names server-chosen (unguessable) → no token-for-any-room hole
+```
+
+Sequence per call:
+
+1. Browser hits `POST /token` (Clerk-authed, quota-checked as before)
+2. API mints a fresh single-use room name `echo-{12-hex-uuid}`
+3. API POSTs `{room, user_id}` to the agent's `/dispatch` endpoint
+   over Railway private networking, **before** returning the token —
+   so Echo is usually already in the room when the browser connects
+   (pairs with the "Waking up Echo…" phase on /talk)
+4. Agent spawns one asyncio task per room: joins LiveKit, runs the
+   existing pipeline (Deepgram → Groq → Cartesia, both TranscriptLogger
+   taps, Supabase session rows — all unchanged)
+5. User leaves → `on_participant_disconnected` closes the session row
+   and `task.cancel()`s the pipeline → agent leaves the room
+6. If the user never connects (closed the tab during "Connecting…"),
+   a **90 s no-show watchdog** cancels the task and leaves the room
+
+#### Why not the LiveKit Agent Worker SDK (the original plan)?
+
+Deliberate deviation. Wrapping `livekit-agents` around Pipecat means the
+job context connects to the room with its own identity *and* Pipecat's
+`LiveKitTransport` connects separately — two agent participants per
+call (extra billed minutes, and the web's "agent is here" check would
+fire before the pipeline is actually ready, re-introducing the
+lost-first-words bug). Self-managed dispatch is one HTTP endpoint and
+reuses the whole existing pipeline unchanged. If we outgrow it (job
+queuing, autoscaling), the Worker SDK is still available later.
+
+#### Code changes
+
+**`agent/bot.py`** — process is now an aiohttp server, not a room
+resident:
+- `POST /dispatch` — authenticated by `X-Dispatch-Secret` header;
+  spawns `run_session(room)`; idempotent (re-dispatching an active
+  room is a no-op); tracks tasks in `active_rooms` dict
+- `GET /health` — `{status, active_rooms}` for monitoring
+- `run_session(room)` — the old `main()` parametrized by room name;
+  per-call `SessionState` (no more global session)
+- Binds host `::` — **Railway private networking is IPv6-only**;
+  binding `0.0.0.0` would make `*.railway.internal` unreachable
+- `run_forever()` reconnect loop **deleted**
+- `PipelineRunner(handle_sigint=False)` (server owns signals now)
+
+**`api/main.py`**:
+- `/token`: server-generated room name; client `room` param **removed**
+- Dispatch call with 5 s timeout; on failure returns
+  `503 {"error": "agent_unavailable"}` instead of letting the user
+  join an agent-less room
+- New env: `AGENT_DISPATCH_URL`, `DISPATCH_SECRET`
+- `httpx` added to `api/requirements.txt`
+
+**Web:** zero changes — `/token` response shape is identical.
+
+#### Verified locally (2026-07-03)
+
+- `GET /health` → `{"status": "ok", "active_rooms": 0}`
+- Dispatch without secret → 401; without room → 400
+- Real dispatch → agent joined the LiveKit room, full pipeline
+  connected (Deepgram + Cartesia websockets up)
+- No user joined → watchdog cancelled at 90 s, agent left cleanly,
+  server stayed up, `active_rooms` back to 0
+- Re-test on IPv6 (`http://[::1]:PORT`) after the `::` bind fix
+- Remaining deprecation warnings are pre-existing (PipelineTask →
+  PipelineWorker, Cartesia `voice_id`) — parked for a Pipecat 2.0 pass
+
+#### Deploy checklist (manual, Railway) — NOT DONE YET
+
+1. Generate a secret: `openssl rand -hex 32`
+2. Agent service (named `echovoice-api`, root `/agent`): set
+   `DISPATCH_SECRET=<secret>` and `PORT=8080`, re-enable deployment
+3. API service: set `DISPATCH_SECRET=<same>` and
+   `AGENT_DISPATCH_URL=http://<agent-service-name>.railway.internal:8080`,
+   redeploy
+4. Commit + push first — Railway builds from the repo
+5. Test a call in prod; agent logs should show
+   `dispatched agent to room 'echo-…'`
+
+### 2026-07-07 — Dispatch deployed to prod + API endpoint audit
+
+**Dispatch is live.** Deploy hit two snags, both fixed:
+1. 502 through the agent's public domain — the generated domain's
+   target port didn't match; set to 8080
+2. Second 502 — the `host="::"` bind was IPv6-only and Railway's public
+   edge connects over IPv4; fixed by binding all interfaces
+   (`7acb037`), which also keeps `railway.internal` working for the
+   future project consolidation
+
+Note from the deploy: the container built **Pipecat 1.5.0** (local venv
+has 1.4.0) because `agent/requirements.txt` is unpinned. Worked, but
+pin versions eventually (added to tech debt).
+
+Also shipped: the meadow web redesign is deployed on Vercel
+(`4d7fa17`).
+
+#### Endpoint audit — designs vs API (2026-07-07)
+
+Mapped every screen in the web + iOS designs against `api/main.py`.
+
+**Exists:** `POST /token`, `GET /quota`, `GET /sessions`,
+`POST /billing/checkout`, `POST /billing/portal`,
+`POST /webhooks/stripe`, healths, agent `POST /dispatch`.
+
+**Missing, in suggested build order:**
+
+1. **Transcript read path** — biggest gap. Data already lands in
+   Supabase (`transcripts` table) but nothing serves it:
+   - `GET /sessions/{id}` — meta + stats (duration, words, corrections)
+   - `GET /sessions/{id}/transcript` — ordered turns
+   - `GET /sessions/latest` — the browser never learns the session id
+     (the agent creates the row), so Summary can't link to its own
+     transcript without this
+   - extend `GET /sessions` with title + preview (once #2 exists)
+   - Unlocks: Transcript screen, real Summary stats, richer History
+2. **Post-session analysis job** (agent-side, on `end_session`) — LLM
+   pass that writes back: session title ("A trip to the market"),
+   correction annotations (buyed → bought), word count. The designs'
+   "gentle corrections" feature is this job + #1.
+3. **Saved phrases** — whole feature has no backend:
+   `GET/POST /phrases`, `DELETE /phrases/{id}`; new table
+   `phrases (id, user_id, session_id, phrase, note, tag, created_at)`;
+   optional `POST /tts` later for iOS "tap to hear it"
+4. **User preferences** — onboarding answers (level/topic) currently
+   live in localStorage only; the agent can't tune its prompt per
+   level until this exists: `GET/PATCH /me/preferences` (level, topic,
+   language, daily reminder)
+5. **Live captions** — not REST: agent publishes STT/LLM text over the
+   LiveKit data channel it's already in; web/iOS subscribe in-room.
+   Premium gating decides what gets published/shown.
+6. **`DELETE /me`** — account deletion (Clerk + Supabase + Stripe
+   cancel). iOS Profile design shows it; required for App Store review.
+
+### Technical debt
+
+- **Consolidate Railway services into one project** (2026-07-05): API and
+  agent currently live in *separate* Railway projects, so private
+  networking (`.railway.internal`) can't connect them. Dispatch runs
+  over the agent's public URL (`AGENT_DISPATCH_URL=https://….up.railway.app`),
+  protected only by `DISPATCH_SECRET`. Fix: create a new service inside
+  the API's project (same repo, root `/agent`), copy env vars, delete
+  the standalone agent project, switch `AGENT_DISPATCH_URL` to
+  `http://<name>.railway.internal:8080`, and remove the public domain.
+- `DAILY_CAP_S`/trial constants duplicated between `api/limits.py` and
+  `agent/db.py` (two venvs, no shared package)
+- Pipecat 1.4 deprecations: `PipelineTask`/`PipelineRunner` → Worker
+  API, Cartesia `voice_id` param (do together as a Pipecat 2.0 pass)
+- Missing client endpoints: see the 2026-07-07 endpoint audit above
+  (transcript read path, saved phrases, preferences, live captions,
+  DELETE /me)
+- Pin agent dependency versions (`agent/requirements.txt` is unpinned;
+  prod built Pipecat 1.5.0 while local venv has 1.4.0)
+- iOS app is UI-only — needs Clerk, /token + dispatch, and LiveKit
+  Swift SDK wiring
+
 ### Later
 
 - Tune system prompt per learner level, swap voices

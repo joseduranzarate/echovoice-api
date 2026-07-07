@@ -1,0 +1,33 @@
+name: EchoMobile
+options:
+  bundleIdPrefix: com.echo
+  deploymentTarget:
+    iOS: "17.0"
+targets:
+  EchoMobile:
+    type: application
+    platform: iOS
+    sources:
+      - EchoMobile/Sources
+      - EchoMobile/Resources
+    info:
+      path: EchoMobile/Info.plist
+      properties:
+        CFBundleDisplayName: Echo
+        UILaunchScreen: {}
+        UIAppFonts:
+          - PlusJakartaSans-Regular.ttf
+          - PlusJakartaSans-Medium.ttf
+          - PlusJakartaSans-SemiBold.ttf
+          - PlusJakartaSans-Bold.ttf
+          - PlusJakartaSans-ExtraBold.ttf
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UIUserInterfaceStyle: Light
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.echo.mobile
+        SWIFT_VERSION: "5.9"
+        TARGETED_DEVICE_FAMILY: "1"
+        INFOPLIST_KEY_UIStatusBarStyle: UIStatusBarStyleDarkContent
+        CODE_SIGNING_ALLOWED: "NO"
