@@ -24,3 +24,6 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+ios/**/xcuserdata/
+ios/**/*.xcuserstate
+.DS_Store
