@@ -900,11 +900,41 @@ Mapped every screen in the web + iOS designs against `api/main.py`.
    live in localStorage only; the agent can't tune its prompt per
    level until this exists: `GET/PATCH /me/preferences` (level, topic,
    language, daily reminder)
-5. **Live captions** — not REST: agent publishes STT/LLM text over the
-   LiveKit data channel it's already in; web/iOS subscribe in-room.
-   Premium gating decides what gets published/shown.
+5. **Live captions** — ✅ shipped 2026-07-07 (see entry below). Not
+   REST: agent publishes STT/LLM text over the LiveKit data channel;
+   web subscribes in-room. iOS still needs its subscriber side.
 6. **`DELETE /me`** — account deletion (Clerk + Supabase + Stripe
    cancel). iOS Profile design shows it; required for App Store review.
+
+### 2026-07-07 — Live captions on /talk (caption strip + toggle)
+
+Audit item #5, the design's "Caption strip" variant: a toggleable
+two-line strip under the orb — your last line (muted, "You" prefix) and
+Echo's current line (display size, olive "Echo" prefix).
+
+**Transport: LiveKit data channel, zero new REST endpoints.** The agent
+and browser already share a room; text rides alongside the audio.
+
+**Agent** — `TranscriptLogger` now also pushes
+`LiveKitOutputTransportMessageFrame` DataFrames downstream; the output
+transport JSON-encodes and publishes them reliably:
+`{type: "transcript", role: "user"|"assistant", text, final}`.
+- User captions stream in real time (Deepgram interims, `final:false`,
+  then the final line)
+- Echo's caption publishes when the LLM reply completes — i.e. right as
+  TTS starts speaking it
+- Same DB writes as before; captions are an extra tap, not a change
+
+**Web (/talk)** — captions button between mic and "End & review"
+(accent-tinted when active), `RoomEvent.DataReceived` listener, strip
+renders in the space the idle greeting uses. Lines reset per call.
+Backward/forward compatible: old web ignores the data messages; new web
+with old agent just shows no captions.
+
+**Gating note:** captions are currently available to all plans. The
+tier table marks live captions as premium — when we enforce that, gate
+publish-side in the agent (it knows the user's plan via the session
+row) rather than hiding client-side.
 
 ### Technical debt
 

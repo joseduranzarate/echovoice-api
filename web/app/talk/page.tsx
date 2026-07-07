@@ -29,6 +29,9 @@ export default function TalkPage() {
   const [quota, setQuota] = useState<Quota | null>(null);
   const [micOn, setMicOn] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [captionsOn, setCaptionsOn] = useState(false);
+  const [userLine, setUserLine] = useState("");
+  const [echoLine, setEchoLine] = useState("");
 
   const roomRef = useRef<Room | null>(null);
   const audioElRef = useRef<HTMLAudioElement | null>(null);
@@ -91,6 +94,8 @@ export default function TalkPage() {
 
   async function startCall() {
     setErrorMsg(null);
+    setUserLine("");
+    setEchoLine("");
     setPhase("connecting");
     setOrbState("connecting");
 
@@ -131,6 +136,19 @@ export default function TalkPage() {
         const remoteTalking = speakers.some((s) => s.identity !== meId);
         if (remoteTalking) setOrbState("speaking");
         else setOrbState("listening");
+      });
+
+      // Live captions — the agent publishes {type:"transcript", role, text,
+      // final} on the room's data channel for every turn.
+      room.on(RoomEvent.DataReceived, (payload) => {
+        try {
+          const msg = JSON.parse(new TextDecoder().decode(payload));
+          if (msg?.type !== "transcript") return;
+          if (msg.role === "user") setUserLine(msg.text);
+          else if (msg.role === "assistant") setEchoLine(msg.text);
+        } catch {
+          // non-JSON data message — ignore
+        }
       });
 
       room.on(RoomEvent.Disconnected, () => {
@@ -262,8 +280,8 @@ export default function TalkPage() {
           />
         </button>
 
-        {/* Greeting under the orb when idle */}
-        <div className="h-12 mt-8 flex flex-col items-center gap-1 text-center">
+        {/* Under the orb: greeting when idle, caption strip when live */}
+        <div className="min-h-12 mt-8 flex flex-col items-center gap-1 text-center max-w-[680px]">
           {canStart && (
             <>
               <h1 className="font-display text-[clamp(22px,3.4vw,28px)]">
@@ -273,6 +291,27 @@ export default function TalkPage() {
                 Tap the orb — or the button below — to start.
               </p>
             </>
+          )}
+          {phase === "live" && captionsOn && (
+            <div className="flex flex-col items-center gap-2 animate-fade-up">
+              {userLine && (
+                <p className="text-[15px] leading-snug text-[var(--color-text-soft)]">
+                  <span className="font-bold mr-1.5">You</span>
+                  {userLine}
+                </p>
+              )}
+              {echoLine && (
+                <p className="font-display text-[clamp(18px,2.4vw,26px)] leading-snug text-[var(--color-ink)]">
+                  <span className="text-[var(--color-accent)] mr-2">Echo</span>
+                  {echoLine}
+                </p>
+              )}
+              {!userLine && !echoLine && (
+                <p className="text-[14px] text-[var(--color-text-faint)]">
+                  Captions will appear as you talk.
+                </p>
+              )}
+            </div>
           )}
         </div>
 
@@ -309,6 +348,22 @@ export default function TalkPage() {
                     <path d="M4 4l16 16" />
                   </svg>
                 )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setCaptionsOn((v) => !v)}
+                disabled={phase !== "live"}
+                title={captionsOn ? "Hide captions" : "Show captions"}
+                className={`w-[60px] h-[60px] rounded-full flex items-center justify-center cursor-pointer disabled:opacity-50 transition-colors border ${
+                  captionsOn
+                    ? "bg-[var(--color-accent-soft)] border-[var(--color-accent)] text-[var(--color-accent)]"
+                    : "bg-[var(--color-surface)] border-[var(--color-border)] text-[#3C3E2E] hover:border-[var(--color-accent)]"
+                }`}
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                  <rect x="3" y="5" width="18" height="14" rx="4" />
+                  <path d="M7 11h3M7 14.5h2M14 11h3M14 14.5h2" />
+                </svg>
               </button>
               <button
                 type="button"

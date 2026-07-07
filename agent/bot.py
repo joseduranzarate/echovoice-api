@@ -26,7 +26,11 @@ from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
 from pipecat.services.cartesia.tts import CartesiaTTSService
 from pipecat.services.deepgram.stt import DeepgramSTTService
 from pipecat.services.groq.llm import GroqLLMService
-from pipecat.transports.livekit.transport import LiveKitParams, LiveKitTransport
+from pipecat.transports.livekit.transport import (
+    LiveKitOutputTransportMessageFrame,
+    LiveKitParams,
+    LiveKitTransport,
+)
 
 load_dotenv()
 
@@ -85,7 +89,9 @@ class SessionState:
 
 
 class TranscriptLogger(FrameProcessor):
-    """Logs each turn and fires off async DB writes (one row per user/assistant line)."""
+    """Logs each turn, fires off async DB writes (one row per user/assistant
+    line), and publishes live-caption events over the LiveKit data channel
+    (the browser's caption strip subscribes to these in-room)."""
 
     def __init__(self, session: SessionState):
         super().__init__()
@@ -99,14 +105,25 @@ class TranscriptLogger(FrameProcessor):
         # Fire-and-forget so the audio pipeline never waits on Supabase.
         asyncio.create_task(asyncio.to_thread(db.append_transcript, sid, role, text))
 
+    async def _caption(self, role: str, text: str, final: bool) -> None:
+        # Downstream DataFrame — transport.output() JSON-encodes the dict and
+        # publishes it on the room's reliable data channel.
+        await self.push_frame(
+            LiveKitOutputTransportMessageFrame(
+                message={"type": "transcript", "role": role, "text": text, "final": final}
+            )
+        )
+
     async def process_frame(self, frame: Frame, direction: FrameDirection):
         await super().process_frame(frame, direction)
 
         if isinstance(frame, TranscriptionFrame):
             logger.info(f"USER  > {frame.text!r}")
             self._persist("user", frame.text)
+            await self._caption("user", frame.text, final=True)
         elif isinstance(frame, InterimTranscriptionFrame):
             logger.debug(f"user.. > {frame.text!r}")
+            await self._caption("user", frame.text, final=False)
         elif isinstance(frame, LLMTextFrame):
             self._assistant_buffer.append(frame.text)
         elif isinstance(frame, LLMFullResponseEndFrame):
@@ -114,6 +131,7 @@ class TranscriptLogger(FrameProcessor):
             if reply:
                 logger.info(f"AGENT > {reply!r}")
                 self._persist("assistant", reply)
+                await self._caption("assistant", reply, final=True)
             self._assistant_buffer = []
 
         await self.push_frame(frame, direction)
