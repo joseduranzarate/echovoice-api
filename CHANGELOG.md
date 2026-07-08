@@ -1075,6 +1075,39 @@ Lesson recorded: the June "quota works" verification silently regressed
 when prod rebuilt with a newer Pipecat. Pinning + the dashboard are the
 two guards against it happening quietly again.
 
+### 2026-07-07 — iOS wired to the real backend (feature parity with web)
+
+The iOS app is no longer a demo shell — every web feature now has its
+native counterpart, pending only two config values.
+
+**Dependencies** (SPM via xcodegen): `clerk-ios` 1.2.x (ClerkKit) +
+`livekit/client-sdk-swift` 2.15.x. Mic permission + background audio in
+Info.plist.
+
+**Auth**: Clerk configured at launch; Auth screen runs real
+`signInWithOAuth(.google/.apple)`; `ClerkTokenProvider` feeds the
+session JWT to `EchoAPI` (same Bearer flow as web). Splash lands on
+Home when signed in, Welcome when not.
+
+**Real voice calls** (`CallController`): mintToken (with scenario) →
+LiveKit Room connect → mic publish → wait-for-agent (12s, same as web)
+→ live. Speaking/listening orb states from `didUpdateSpeakingParticipants`,
+mic mute toggle, elapsed timer, 429 → paywall, 503 → friendly error.
+**Live captions** parsed from the agent's data-channel messages — the
+Live Transcript screen now shows the real conversation streaming in.
+
+**Data screens on EchoAPI**: Home (real quota, name, scenario chips →
+roleplay), History (sessions + search + week stats), Session detail
+(transcript + corrections + Save phrase), Saved (list/delete), Summary
+(latest session stats + title), Paywall (real Stripe checkout URL via
+Safari), Profile (email, plan, sign out, two-tap delete account),
+Setup → PATCH /me/preferences. DemoData trimmed to static content.
+
+**Config gate**: `Sources/Config.swift` needs the Clerk publishable key
+and API URL (copy from `web/.env.local`); until then the app shows an
+"Almost there" instruction screen instead of crashing. Builds clean in
+the simulator; on-device sign-in/audio testing pending those keys.
+
 ### Technical debt
 
 - **Consolidate Railway services into one project** (2026-07-05): API and

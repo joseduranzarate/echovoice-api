@@ -3,6 +3,13 @@ options:
   bundleIdPrefix: com.echo
   deploymentTarget:
     iOS: "17.0"
+packages:
+  ClerkiOS:
+    url: https://github.com/clerk/clerk-ios
+    from: 1.2.0
+  LiveKit:
+    url: https://github.com/livekit/client-sdk-swift
+    from: 2.6.0
 targets:
   EchoMobile:
     type: application
@@ -10,6 +17,11 @@ targets:
     sources:
       - EchoMobile/Sources
       - EchoMobile/Resources
+    dependencies:
+      - package: ClerkiOS
+        product: ClerkKit
+      - package: LiveKit
+        product: LiveKit
     info:
       path: EchoMobile/Info.plist
       properties:
@@ -21,9 +33,12 @@ targets:
           - PlusJakartaSans-SemiBold.ttf
           - PlusJakartaSans-Bold.ttf
           - PlusJakartaSans-ExtraBold.ttf
+        NSMicrophoneUsageDescription: Echo needs your microphone so you can speak with your practice partner.
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         UIUserInterfaceStyle: Light
+        UIBackgroundModes:
+          - audio
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.echo.mobile

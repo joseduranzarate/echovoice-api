@@ -3,6 +3,16 @@ import SwiftUI
 struct HomeScreen: View {
     @EnvironmentObject var router: Router
 
+    private var daypart: String {
+        let h = Calendar.current.component(.hour, from: Date())
+        return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening"
+    }
+
+    private var remaining: String {
+        guard let q = router.quota else { return "…" }
+        return fmtClock(q.dailyRemainingS + q.trialRemainingS)
+    }
+
     var body: some View {
         ZStack {
             Theme.tabGradient.ignoresSafeArea()
@@ -13,7 +23,7 @@ struct HomeScreen: View {
                     HStack {
                         HStack(spacing: 11) {
                             OrbView(size: 44)
-                            Text("Good evening")
+                            Text(daypart)
                                 .font(.jakarta(15, .bold))
                                 .foregroundStyle(Theme.ink)
                         }
@@ -22,26 +32,28 @@ struct HomeScreen: View {
                     }
                     .padding(.bottom, 26)
 
-                    Text("Hey George,\nready to speak?")
+                    Text("Hey \(router.userName),\nready to speak?")
                         .font(.jakarta(28, .heavy))
                         .tracking(-0.7)
                         .lineSpacing(2)
                         .foregroundStyle(Theme.ink)
 
                     (Text("You've got ")
-                        + Text("2:31").font(.jakarta(15, .bold)).foregroundStyle(Theme.accent)
-                        + Text(" of free practice left today."))
+                        + Text(remaining).font(.jakarta(15, .bold)).foregroundStyle(Theme.accent)
+                        + Text(" of practice left today."))
                         .font(.jakarta(15))
                         .foregroundStyle(Theme.textMuted)
                         .padding(.top, 10)
 
-                    // Prompt chips
-                    FlowChips(items: DemoData.prompts) { router.go(.conversation) }
-                        .padding(.top, 22)
+                    // Prompt chips → scenario roleplay, same as web
+                    FlowChips(items: DemoData.prompts) { label in
+                        router.startTalk(scenario: label)
+                    }
+                    .padding(.top, 22)
 
-                    // Talk hero
+                    // Talk hero — free talk, no scenario
                     Button {
-                        router.go(.conversation)
+                        router.startTalk()
                     } label: {
                         HStack(spacing: 15) {
                             OrbView(size: 52)
@@ -101,7 +113,7 @@ struct HomeScreen: View {
 
     private func scenarioCard(_ s: DemoData.Scenario) -> some View {
         Button {
-            router.go(.conversation)
+            router.startTalk(scenario: "\(s.title) — \(s.desc)")
         } label: {
             VStack(alignment: .leading, spacing: 0) {
                 Text(s.emoji)
@@ -135,7 +147,7 @@ struct HomeScreen: View {
 /// Wrapping chip row (simple two-row flow for the five demo prompts).
 struct FlowChips: View {
     var items: [String]
-    var onTap: () -> Void
+    var onTap: (String) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 9) {
@@ -143,7 +155,7 @@ struct FlowChips: View {
             ForEach(0..<rows.count, id: \.self) { r in
                 HStack(spacing: 9) {
                     ForEach(rows[r], id: \.self) { label in
-                        Button(action: onTap) {
+                        Button(action: { onTap(label) }) {
                             Text(label)
                                 .font(.jakarta(14, .medium))
                                 .foregroundStyle(Theme.textBody)

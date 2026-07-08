@@ -1,9 +1,15 @@
 import SwiftUI
+import UIKit
 
-// MARK: - Session detail (transcript + corrections)
+// MARK: - Session detail (real transcript + corrections)
 
 struct SessionDetailScreen: View {
     @EnvironmentObject var router: Router
+
+    @State private var session: SessionSummary?
+    @State private var turns: [TranscriptTurn]?
+    @State private var savedTurnIDs: Set<Int> = []
+    @State private var failed = false
 
     var body: some View {
         ZStack {
@@ -15,11 +21,12 @@ struct SessionDetailScreen: View {
                     HStack(spacing: 12) {
                         CircleIconButton(systemName: "chevron.left") { router.go(.history) }
                         VStack(alignment: .leading, spacing: 1) {
-                            Text("A trip to the market")
+                            Text(session?.title ?? "Conversation")
                                 .font(.jakarta(21, .heavy))
                                 .tracking(-0.4)
                                 .foregroundStyle(Theme.ink)
-                            Text("Today · 6 min")
+                                .lineLimit(1)
+                            Text(metaLine)
                                 .font(.jakarta(13))
                                 .foregroundStyle(Theme.textSoft)
                         }
@@ -27,26 +34,49 @@ struct SessionDetailScreen: View {
                     .padding(.bottom, 18)
 
                     // Stats strip
-                    HStack(spacing: 14) {
-                        stat("214", "words", color: Theme.inkDark)
-                        stat("6", "min", color: Theme.inkDark)
-                        stat("3", "corrections", color: Theme.accent)
+                    if let s = session {
+                        HStack(spacing: 14) {
+                            if let w = s.wordCount {
+                                statPair("\(w)", "words")
+                            }
+                            statPair("\(s.durationS / 60)", "min")
+                            if let c = s.correctionCount, c > 0 {
+                                (Text("\(c)").font(.jakarta(13, .bold))
+                                    + Text(" corrections").font(.jakarta(13)))
+                                    .foregroundStyle(Theme.accent)
+                            }
+                            Spacer()
+                        }
+                        .padding(.top, 6)
+                        .padding(.bottom, 18)
+                        .overlay(alignment: .bottom) {
+                            Rectangle().fill(Theme.chipBdSoft).frame(height: 1)
+                        }
+                        .padding(.bottom, 22)
                     }
-                    .padding(.top, 6)
-                    .padding(.bottom, 18)
-                    .overlay(alignment: .bottom) {
-                        Rectangle().fill(Theme.chipBdSoft).frame(height: 1)
-                    }
-                    .padding(.bottom, 22)
 
-                    VStack(spacing: 18) {
-                        ForEach(DemoData.sessionDetail) { t in
-                            if t.speaker == .you {
-                                youTurn(t)
-                            } else {
-                                echoTurn(t)
+                    if failed {
+                        Text("Couldn't load this conversation.")
+                            .font(.jakarta(14))
+                            .foregroundStyle(Theme.danger)
+                    } else if let turns {
+                        if turns.isEmpty {
+                            Text("No transcript was recorded for this conversation.")
+                                .font(.jakarta(14))
+                                .foregroundStyle(Theme.textMuted)
+                        } else {
+                            VStack(spacing: 18) {
+                                ForEach(turns) { t in
+                                    if t.role == "user" {
+                                        userTurn(t)
+                                    } else {
+                                        echoTurn(t)
+                                    }
+                                }
                             }
                         }
+                    } else {
+                        ProgressView().padding(.top, 40).frame(maxWidth: .infinity)
                     }
                 }
                 .padding(.horizontal, 20)
@@ -54,14 +84,48 @@ struct SessionDetailScreen: View {
                 .padding(.bottom, 40)
             }
         }
+        .task(id: router.selectedSessionID) { await load() }
     }
 
-    private func stat(_ value: String, _ label: String, color: Color) -> some View {
-        (Text(value).font(.jakarta(13, .bold)).foregroundStyle(color)
-            + Text(" \(label)").font(.jakarta(13)).foregroundStyle(color == Theme.accent ? Theme.accent : Theme.textMuted))
+    private var metaLine: String {
+        guard let s = session else { return " " }
+        return "\(fmtDate(s.startedAt)) · \(max(1, s.durationS / 60)) min"
     }
 
-    private func youTurn(_ t: DemoData.Turn) -> some View {
+    private func load() async {
+        guard let id = router.selectedSessionID else {
+            failed = true
+            return
+        }
+        do {
+            async let s = router.api.session(id: id)
+            async let t = router.api.transcript(sessionId: id)
+            session = try await s
+            turns = try await t
+        } catch {
+            failed = true
+        }
+    }
+
+    private func savePhrase(_ t: TranscriptTurn) {
+        guard let c = t.correction, !savedTurnIDs.contains(t.id) else { return }
+        Task {
+            _ = try? await router.api.savePhrase(
+                c.to,
+                note: "Instead of “\(c.from)”.",
+                tag: "Correction",
+                sessionId: router.selectedSessionID
+            )
+            savedTurnIDs.insert(t.id)
+        }
+    }
+
+    private func statPair(_ value: String, _ label: String) -> some View {
+        (Text(value).font(.jakarta(13, .bold)).foregroundStyle(Theme.inkDark)
+            + Text(" \(label)").font(.jakarta(13)).foregroundStyle(Theme.textMuted))
+    }
+
+    private func userTurn(_ t: TranscriptTurn) -> some View {
         HStack {
             Spacer(minLength: 50)
             VStack(alignment: .trailing, spacing: 8) {
@@ -83,10 +147,26 @@ struct SessionDetailScreen: View {
 
                 if let c = t.correction {
                     VStack(alignment: .leading, spacing: 5) {
-                        Text("GENTLE CORRECTION")
-                            .font(.jakarta(11, .bold))
-                            .tracking(0.6)
-                            .foregroundStyle(Theme.accent)
+                        HStack {
+                            Text("GENTLE CORRECTION")
+                                .font(.jakarta(11, .bold))
+                                .tracking(0.6)
+                                .foregroundStyle(Theme.accent)
+                            Spacer()
+                            Button {
+                                savePhrase(t)
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: savedTurnIDs.contains(t.id) ? "bookmark.fill" : "bookmark")
+                                        .font(.system(size: 11, weight: .semibold))
+                                    Text(savedTurnIDs.contains(t.id) ? "Saved" : "Save phrase")
+                                        .font(.jakarta(12, .semibold))
+                                }
+                                .foregroundStyle(Theme.accent)
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(savedTurnIDs.contains(t.id))
+                        }
                         (Text(c.from).strikethrough().foregroundStyle(Color(hex: 0xA9A38C))
                             + Text("  →  ").foregroundStyle(Color(hex: 0xC4BEA6))
                             + Text(c.to).font(.jakarta(14, .semibold)).foregroundStyle(Theme.inkDark))
@@ -110,28 +190,21 @@ struct SessionDetailScreen: View {
         }
     }
 
-    private func echoTurn(_ t: DemoData.Turn) -> some View {
+    private func echoTurn(_ t: TranscriptTurn) -> some View {
         HStack {
-            VStack(alignment: .leading, spacing: 9) {
+            HStack(alignment: .top, spacing: 12) {
+                OrbView(size: 34)
                 Text(t.text)
                     .font(.jakarta(15))
                     .lineSpacing(4)
                     .foregroundStyle(Theme.textBody)
-                HStack(spacing: 16) {
-                    Image(systemName: "doc.on.doc")
-                    Image(systemName: "hand.thumbsup")
-                    Image(systemName: "speaker.wave.2")
-                    Image(systemName: "arrow.counterclockwise")
-                }
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(Theme.accent)
             }
             Spacer(minLength: 40)
         }
     }
 }
 
-// MARK: - Summary
+// MARK: - Summary (real, from /sessions/latest)
 
 struct SummaryScreen: View {
     @EnvironmentObject var router: Router
@@ -146,30 +219,61 @@ struct SummaryScreen: View {
                 OrbView(size: 54)
                     .padding(.bottom, 24)
 
-                Text("Nice work.")
+                Text(headline)
                     .font(.jakarta(34, .heavy))
                     .tracking(-0.8)
                     .foregroundStyle(Theme.ink)
-                Text("You spoke 4 minutes today.")
+                Text(sub)
                     .font(.jakarta(16))
                     .foregroundStyle(Theme.textMuted)
                     .padding(.top, 8)
 
-                HStack(spacing: 12) {
-                    statCard("214", "words spoken", valueColor: Theme.ink)
-                    statCard("3", "new phrases", valueColor: Theme.accent)
+                if let s = router.latest, let t = s.title {
+                    Text("“\(t)”")
+                        .font(.jakarta(13, .semibold))
+                        .foregroundStyle(Theme.accent)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 6)
+                        .background(Capsule().fill(Theme.accentSoft))
+                        .padding(.top, 10)
                 }
-                .padding(.top, 28)
+
+                if let s = router.latest {
+                    HStack(spacing: 12) {
+                        statCard("\(s.wordCount ?? s.durationS / 3)", "words spoken", valueColor: Theme.ink)
+                        statCard("\(s.correctionCount ?? 0)", "corrections", valueColor: Theme.accent)
+                    }
+                    .padding(.top, 28)
+                }
 
                 Spacer()
 
-                YellowPillButton(title: "See transcript") { router.go(.session) }
+                if router.latest != nil {
+                    YellowPillButton(title: "See transcript") {
+                        router.selectedSessionID = router.latest?.id
+                        router.go(.session)
+                    }
+                }
                 GhostButton(title: "Back home") { router.go(.home) }
                     .padding(.top, 12)
             }
             .padding(.horizontal, 26)
             .padding(.bottom, 24)
         }
+        .onAppear {
+            router.refreshLatest()
+            router.refreshQuota()
+        }
+    }
+
+    private var headline: String {
+        (router.latest?.durationS ?? 0) >= 30 ? "Nice work." : "That was a short one."
+    }
+
+    private var sub: String {
+        guard let s = router.latest else { return "Loading your session…" }
+        let m = s.durationS / 60
+        return m > 0 ? "You spoke \(m) minute\(m == 1 ? "" : "s") today." : "You spoke \(s.durationS) seconds."
     }
 
     private func statCard(_ value: String, _ label: String, valueColor: Color) -> some View {
@@ -188,10 +292,12 @@ struct SummaryScreen: View {
     }
 }
 
-// MARK: - Paywall
+// MARK: - Paywall (real Stripe checkout via API)
 
 struct PaywallScreen: View {
     @EnvironmentObject var router: Router
+    @State private var loading = false
+    @State private var errorMsg: String? = nil
 
     private let perks = [
         "30 minutes a day",
@@ -257,9 +363,18 @@ struct PaywallScreen: View {
                 .card(radius: 22)
                 .padding(.top, 26)
 
+                if let errorMsg {
+                    Text(errorMsg)
+                        .font(.jakarta(13))
+                        .foregroundStyle(Theme.danger)
+                        .padding(.top, 10)
+                }
+
                 Spacer()
 
-                YellowPillButton(title: "Unlock Premium") { router.go(.home) }
+                YellowPillButton(title: loading ? "Opening checkout…" : "Unlock Premium") {
+                    upgrade()
+                }
                 GhostButton(title: "See you tomorrow") { router.go(.home) }
                     .padding(.top, 12)
             }
@@ -267,4 +382,26 @@ struct PaywallScreen: View {
             .padding(.bottom, 24)
         }
     }
+
+    private func upgrade() {
+        guard !loading else { return }
+        loading = true
+        errorMsg = nil
+        Task {
+            do {
+                let url = try await router.api.checkoutURL()
+                await UIApplication.shared.open(url)
+            } catch {
+                errorMsg = "Couldn't reach checkout. Try again in a moment."
+            }
+            loading = false
+        }
+    }
+}
+
+func fmtDate(_ iso: String) -> String {
+    let f = ISO8601DateFormatter()
+    f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    let date = f.date(from: iso) ?? ISO8601DateFormatter().date(from: iso) ?? Date()
+    return date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
 }

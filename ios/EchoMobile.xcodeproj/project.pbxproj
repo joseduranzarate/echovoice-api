@@ -8,13 +8,18 @@
 
 /* Begin PBXBuildFile section */
 		0865356C704117896814F77D /* OnboardingScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = E60ADE74B79B429F80E5C197 /* OnboardingScreens.swift */; };
+		247AFFCE5AB2C5FEF566E9D0 /* ClerkKit in Frameworks */ = {isa = PBXBuildFile; productRef = D08E99AF413D8B1B6183A8EF /* ClerkKit */; };
+		27B274EB549C2A56AA265BB7 /* LiveKit in Frameworks */ = {isa = PBXBuildFile; productRef = BCD08A13DC212F406A3C6067 /* LiveKit */; };
 		3579EDDA97995743116EB8D9 /* PlusJakartaSans-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = ADA3419B97C459FC752ED3BA /* PlusJakartaSans-Bold.ttf */; };
 		3662CCBC2FAAA8113C09E355 /* PlusJakartaSans-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 78F77338C2D8C64ACE8196B9 /* PlusJakartaSans-Regular.ttf */; };
 		3C27EBEF43C090C65AB1D0B3 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D6BC372F6C0605F808D0834 /* Theme.swift */; };
 		69C49C2939534760F86F6FF0 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3996D46E5F6B6617288DC7AE /* Components.swift */; };
 		6B30C848A8C8B3E81E31F71B /* TalkScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1C50F3BB319AA9655FE15B0 /* TalkScreens.swift */; };
+		754AA1347B24F1516364782C /* EchoAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = E443DB7F71C7EB70DA745FF4 /* EchoAPI.swift */; };
 		7E7D5E79CCA1EAD9D4492B35 /* PlusJakartaSans-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 41640B70487AF70FFA3A1C98 /* PlusJakartaSans-SemiBold.ttf */; };
 		872B3424BE9100F6130F7BC1 /* SessionScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A070A246AFB31DA01525F7B /* SessionScreens.swift */; };
+		9E3F00B0FADC2F63675449FA /* CallController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC79ED4175F648ABEFE4A59C /* CallController.swift */; };
+		9E50E6008BF5FED77A84DF58 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEDE994041B712BE5FEF745D /* Config.swift */; };
 		A018853FE7CF4065A380DBBC /* TabScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF2197D910DA3386430D40EE /* TabScreens.swift */; };
 		CB0BE27461A28AD83DD2F5A7 /* PlusJakartaSans-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 52E797B168ABC85290A04F6C /* PlusJakartaSans-ExtraBold.ttf */; };
 		D199EC81E97F1D36FE1C6A98 /* Router.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCBCE1A5F190900D28A95CEE /* Router.swift */; };
@@ -36,19 +41,37 @@
 		5A070A246AFB31DA01525F7B /* SessionScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionScreens.swift; sourceTree = "<group>"; };
 		78F77338C2D8C64ACE8196B9 /* PlusJakartaSans-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "PlusJakartaSans-Regular.ttf"; sourceTree = "<group>"; };
 		ADA3419B97C459FC752ED3BA /* PlusJakartaSans-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "PlusJakartaSans-Bold.ttf"; sourceTree = "<group>"; };
+		AEDE994041B712BE5FEF745D /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
 		C9C476CD73FA12D7EA50840B /* EchoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EchoApp.swift; sourceTree = "<group>"; };
+		CC79ED4175F648ABEFE4A59C /* CallController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CallController.swift; sourceTree = "<group>"; };
 		E1C50F3BB319AA9655FE15B0 /* TalkScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TalkScreens.swift; sourceTree = "<group>"; };
+		E443DB7F71C7EB70DA745FF4 /* EchoAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EchoAPI.swift; sourceTree = "<group>"; };
 		E60ADE74B79B429F80E5C197 /* OnboardingScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingScreens.swift; sourceTree = "<group>"; };
 		FCBCE1A5F190900D28A95CEE /* Router.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Router.swift; sourceTree = "<group>"; };
 		FF2197D910DA3386430D40EE /* TabScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabScreens.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFrameworksBuildPhase section */
+		9382088CFD40BECB26A67468 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				247AFFCE5AB2C5FEF566E9D0 /* ClerkKit in Frameworks */,
+				27B274EB549C2A56AA265BB7 /* LiveKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
 /* Begin PBXGroup section */
 		1C9524246D693082E56F154D /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				CC79ED4175F648ABEFE4A59C /* CallController.swift */,
 				3996D46E5F6B6617288DC7AE /* Components.swift */,
+				AEDE994041B712BE5FEF745D /* Config.swift */,
 				0B495BAADBBF79B92AD26C42 /* DemoData.swift */,
+				E443DB7F71C7EB70DA745FF4 /* EchoAPI.swift */,
 				C9C476CD73FA12D7EA50840B /* EchoApp.swift */,
 				367EA673ADAC6648BBC2209C /* HomeScreen.swift */,
 				E60ADE74B79B429F80E5C197 /* OnboardingScreens.swift */,
@@ -109,6 +132,7 @@
 			buildPhases = (
 				E6C0003B495F903131FAA104 /* Sources */,
 				8D69DEA9ECE72421BE0BC308 /* Resources */,
+				9382088CFD40BECB26A67468 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -116,6 +140,8 @@
 			);
 			name = EchoMobile;
 			packageProductDependencies = (
+				D08E99AF413D8B1B6183A8EF /* ClerkKit */,
+				BCD08A13DC212F406A3C6067 /* LiveKit */,
 			);
 			productName = EchoMobile;
 			productReference = 307A9CED995CB357F3A4219B /* EchoMobile.app */;
@@ -141,6 +167,10 @@
 			);
 			mainGroup = 76D8A94DFB25CCA863DF8EED;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				12FAABE3DF40B1EC4927E933 /* XCRemoteSwiftPackageReference "clerk-ios" */,
+				417AA0CD11A5B81441A5D944 /* XCRemoteSwiftPackageReference "client-sdk-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C4CF8C32FE171B23EB367523 /* Products */;
 			projectDirPath = "";
@@ -171,8 +201,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9E3F00B0FADC2F63675449FA /* CallController.swift in Sources */,
 				69C49C2939534760F86F6FF0 /* Components.swift in Sources */,
+				9E50E6008BF5FED77A84DF58 /* Config.swift in Sources */,
 				F2037824EF989B48F40291E9 /* DemoData.swift in Sources */,
+				754AA1347B24F1516364782C /* EchoAPI.swift in Sources */,
 				E4D17351426E80801AF537D9 /* EchoApp.swift in Sources */,
 				F2C1F210788629C39191D0F9 /* HomeScreen.swift in Sources */,
 				0865356C704117896814F77D /* OnboardingScreens.swift in Sources */,
@@ -366,6 +399,38 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		12FAABE3DF40B1EC4927E933 /* XCRemoteSwiftPackageReference "clerk-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/clerk/clerk-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.2.0;
+			};
+		};
+		417AA0CD11A5B81441A5D944 /* XCRemoteSwiftPackageReference "client-sdk-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/livekit/client-sdk-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.6.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		BCD08A13DC212F406A3C6067 /* LiveKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 417AA0CD11A5B81441A5D944 /* XCRemoteSwiftPackageReference "client-sdk-swift" */;
+			productName = LiveKit;
+		};
+		D08E99AF413D8B1B6183A8EF /* ClerkKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 12FAABE3DF40B1EC4927E933 /* XCRemoteSwiftPackageReference "clerk-ios" */;
+			productName = ClerkKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 90FCAFD0B0E647247B475914 /* Project object */;
 }

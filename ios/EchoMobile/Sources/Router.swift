@@ -1,4 +1,5 @@
-import SwiftUI
+import Foundation
+import ClerkKit
 
 enum Screen {
     case splash, welcome, auth, setup
@@ -6,94 +7,106 @@ enum Screen {
     case summary, paywall, history, saved, profile
 }
 
-/// Screen router + live-transcript simulation state, mirroring the design
-/// mock's DCLogic component.
+/// Clerk-backed token source for EchoAPI.
+struct ClerkTokenProvider: TokenProvider {
+    func sessionToken() async throws -> String {
+        guard let token = try await Clerk.shared.session?.getToken() else {
+            throw EchoAPIError.unauthenticated
+        }
+        return token
+    }
+}
+
+/// Navigation + app data store. Screens read published data; loaders are
+/// fire-and-forget refreshers hitting the same API the web app uses.
 @MainActor
 final class Router: ObservableObject {
     @Published var screen: Screen = .splash
-    @Published var upsellOpen = false
 
-    // Live transcript playback
-    @Published var turns: [DemoData.Turn] = []
-    @Published var liveIdx = 0
-    @Published var liveCount = 0
-    @Published var running = false
-    @Published var finished = false
+    let api = EchoAPI(baseURL: Config.apiURL, tokens: ClerkTokenProvider())
 
-    private var tickTask: Task<Void, Never>?
+    // Shared app data
+    @Published var quota: Quota?
+    @Published var sessions: [SessionSummary] = []
+    @Published var phrases: [SavedPhrase] = []
+    @Published var latest: SessionSummary?
 
-    var showNav: Bool {
-        [.home, .history, .saved, .profile].contains(screen)
-    }
+    // Cross-screen handoff
+    @Published var selectedSessionID: String?
+    @Published var pendingScenario: String?
+
+    var signedIn: Bool { Clerk.shared.user != nil }
+    var userName: String { Clerk.shared.user?.firstName ?? "you" }
+    var userEmail: String { Clerk.shared.user?.emailAddresses.first?.emailAddress ?? "—" }
+    var isPremium: Bool { quota?.plan == "premium" }
 
     func go(_ s: Screen) {
-        if s != .live { stopLive() }
-        upsellOpen = false
         screen = s
-        if s == .live { startLive() }
-    }
-
-    // MARK: live transcript playback
-
-    var liveLine: DemoData.Turn { DemoData.script[min(liveIdx, DemoData.script.count - 1)] }
-    var liveText: String {
-        liveLine.text.split(separator: " ").prefix(liveCount).joined(separator: " ")
-    }
-
-    func startLive() {
-        stopLive()
-        turns = []
-        liveIdx = 0
-        liveCount = 0
-        running = true
-        finished = false
-        schedule(after: 0.65)
-    }
-
-    func stopLive() {
-        tickTask?.cancel()
-        tickTask = nil
-    }
-
-    func togglePause() {
-        if finished { startLive(); return }
-        if running {
-            stopLive()
-            running = false
-        } else {
-            running = true
-            schedule(after: 0.25)
+        switch s {
+        case .home: refreshQuota()
+        case .history: refreshSessions()
+        case .saved: refreshPhrases()
+        case .profile: refreshQuota()
+        default: break
         }
     }
 
-    private func schedule(after seconds: Double) {
-        tickTask?.cancel()
-        tickTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
-            guard !Task.isCancelled else { return }
-            self?.tick()
+    /// Where to land after splash: signed-out → welcome; signed-in → home.
+    func landAfterSplash() {
+        go(signedIn ? .home : .welcome)
+    }
+
+    func startTalk(scenario: String? = nil) {
+        pendingScenario = scenario
+        go(.conversation)
+    }
+
+    // MARK: loaders (best-effort; screens show what they have)
+
+    func refreshQuota() {
+        Task { [weak self] in
+            guard let self else { return }
+            if let q = try? await self.api.quota() { self.quota = q }
         }
     }
 
-    private func tick() {
-        guard screen == .live, running else { return }
-        let line = DemoData.script[liveIdx]
-        let words = line.text.split(separator: " ")
-        if liveCount < words.count {
-            liveCount += 1
-            schedule(after: line.speaker == .you ? 0.195 : 0.115)
-        } else {
-            turns.append(line)
-            let next = liveIdx + 1
-            if next >= DemoData.script.count {
-                liveCount = 0
-                running = false
-                finished = true
-                return
-            }
-            liveIdx = next
-            liveCount = 0
-            schedule(after: 0.72)
+    func refreshSessions() {
+        Task { [weak self] in
+            guard let self else { return }
+            if let s = try? await self.api.sessions() { self.sessions = s }
         }
+    }
+
+    func refreshPhrases() {
+        Task { [weak self] in
+            guard let self else { return }
+            if let p = try? await self.api.phrases() { self.phrases = p }
+        }
+    }
+
+    func refreshLatest() {
+        Task { [weak self] in
+            guard let self else { return }
+            if let l = try? await self.api.latestSession() { self.latest = l }
+        }
+    }
+
+    func signOut() {
+        Task { [weak self] in
+            try? await Clerk.shared.auth.signOut()
+            self?.quota = nil
+            self?.sessions = []
+            self?.phrases = []
+            self?.go(.welcome)
+        }
+    }
+
+    func deleteAccount() async {
+        try? await api.deleteAccount()
+        try? await Clerk.shared.auth.signOut()
+        quota = nil
+        sessions = []
+        phrases = []
+        go(.welcome)
     }
 }

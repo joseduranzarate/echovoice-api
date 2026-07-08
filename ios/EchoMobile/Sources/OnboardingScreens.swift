@@ -1,4 +1,5 @@
 import SwiftUI
+import ClerkKit
 
 // MARK: - Splash
 
@@ -69,7 +70,7 @@ struct SplashScreen: View {
             }
         }
         .contentShape(Rectangle())
-        .onTapGesture { router.go(.welcome) }
+        .onTapGesture { router.landAfterSplash() }
         .onAppear {
             withAnimation(.easeInOut(duration: 3).repeatForever(autoreverses: true)) {
                 haloPulse = true
@@ -78,7 +79,7 @@ struct SplashScreen: View {
             withAnimation(.easeOut(duration: 0.7).delay(1.3)) { textShown = true }
             Task {
                 try? await Task.sleep(nanoseconds: 3_200_000_000)
-                if router.screen == .splash { router.go(.welcome) }
+                if router.screen == .splash { router.landAfterSplash() }
             }
         }
     }
@@ -164,6 +165,27 @@ struct WelcomeScreen: View {
 
 struct AuthScreen: View {
     @EnvironmentObject var router: Router
+    @State private var loading: String? = nil
+    @State private var errorMsg: String? = nil
+
+    private func sso(_ provider: OAuthProvider, label: String) {
+        loading = label
+        errorMsg = nil
+        Task {
+            do {
+                _ = try await Clerk.shared.auth.signInWithOAuth(provider: provider)
+                if Clerk.shared.user != nil {
+                    // New users go through setup; returning users go home.
+                    router.go(.setup)
+                } else {
+                    loading = nil
+                }
+            } catch {
+                loading = nil
+                errorMsg = "Sign-in didn't complete — try again."
+            }
+        }
+    }
 
     var body: some View {
         ZStack {
@@ -190,7 +212,14 @@ struct AuthScreen: View {
                 Spacer()
 
                 VStack(spacing: 12) {
-                    ssoButton(label: "Continue with Google") {
+                    if let errorMsg {
+                        Text(errorMsg)
+                            .font(.jakarta(13))
+                            .foregroundStyle(Theme.danger)
+                    }
+                    ssoButton(label: loading == "Google" ? "Opening Google…" : "Continue with Google") {
+                        sso(.google, label: "Google")
+                    } icon: {
                         AnyView(
                             Circle()
                                 .fill(
@@ -202,7 +231,9 @@ struct AuthScreen: View {
                                 .frame(width: 22, height: 22)
                         )
                     }
-                    ssoButton(label: "Continue with Apple") {
+                    ssoButton(label: loading == "Apple" ? "Opening Apple…" : "Continue with Apple") {
+                        sso(.apple, label: "Apple")
+                    } icon: {
                         AnyView(
                             Circle().fill(Theme.inkDark).frame(width: 22, height: 22)
                         )
@@ -216,9 +247,13 @@ struct AuthScreen: View {
         }
     }
 
-    private func ssoButton(label: String, icon: @escaping () -> AnyView) -> some View {
+    private func ssoButton(
+        label: String,
+        action: @escaping () -> Void,
+        icon: @escaping () -> AnyView
+    ) -> some View {
         Button {
-            router.go(.setup)
+            action()
         } label: {
             HStack(spacing: 12) {
                 icon()
@@ -292,8 +327,14 @@ struct SetupScreen: View {
                 Spacer()
 
                 if topic != nil {
-                    YellowPillButton(title: "Enter Echo") { router.go(.home) }
-                        .transition(.opacity.combined(with: .move(edge: .bottom)))
+                    YellowPillButton(title: "Enter Echo") {
+                        // Persist server-side — the agent paces by level.
+                        let l = level?.lowercased()
+                        let t = topic?.lowercased()
+                        Task { try? await router.api.updatePreferences(level: l, topic: t) }
+                        router.go(.home)
+                    }
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
                 }
             }
             .padding(.horizontal, 24)
