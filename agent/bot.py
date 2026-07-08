@@ -25,7 +25,7 @@ from pipecat.processors.aggregators.llm_response_universal import (
 )
 from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
 from pipecat.services.cartesia.tts import CartesiaTTSService
-from pipecat.services.deepgram.stt import DeepgramSTTService
+from pipecat.services.deepgram.stt import DeepgramSTTService, DeepgramSTTSettings
 from pipecat.services.groq.llm import GroqLLMService
 from pipecat.transports.livekit.transport import (
     LiveKitOutputTransportMessageFrame,
@@ -53,6 +53,12 @@ AGENT_IDENTITY = "agent-bot"
 # If the user never shows up after a dispatch, leave the room so we don't
 # burn LiveKit participant-minutes on a no-show.
 NO_SHOW_TIMEOUT_S = 90
+
+# Turn-taking patience. Learners pause mid-sentence to think of the next
+# word; Deepgram's default endpointing (~10ms of silence) makes Echo jump
+# in on those pauses. Tunable via env without code changes.
+STT_ENDPOINTING_MS = int(os.environ.get("STT_ENDPOINTING_MS", "800"))
+STT_UTTERANCE_END_MS = int(os.environ.get("STT_UTTERANCE_END_MS", "1500"))
 
 SYSTEM_PROMPT = (
     "You are Echo, a friendly voice companion helping someone practice "
@@ -225,7 +231,13 @@ async def run_session(
         ),
     )
 
-    stt = DeepgramSTTService(api_key=DEEPGRAM_API_KEY)
+    stt = DeepgramSTTService(
+        api_key=DEEPGRAM_API_KEY,
+        settings=DeepgramSTTSettings(
+            endpointing=STT_ENDPOINTING_MS,
+            utterance_end_ms=STT_UTTERANCE_END_MS,
+        ),
+    )
     llm = GroqLLMService(api_key=GROQ_API_KEY)
     tts = CartesiaTTSService(api_key=CARTESIA_API_KEY, voice_id=CARTESIA_VOICE_ID)
 

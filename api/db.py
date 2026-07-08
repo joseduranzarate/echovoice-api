@@ -131,12 +131,13 @@ def get_transcript(user_id: str, session_id: str) -> list[dict] | None:
     """Ordered turns for one session; None if the session isn't the user's."""
     if get_session(user_id, session_id) is None:
         return None
+    # Ordered by id — the table has no created_at column; serial ids
+    # preserve insertion order.
     res = (
         _client()
         .table("transcripts")
-        .select("id, role, text, correction, created_at")
+        .select("id, role, text, correction")
         .eq("session_id", session_id)
-        .order("created_at")
         .order("id")
         .execute()
     )

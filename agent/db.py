@@ -49,12 +49,12 @@ def append_transcript(session_id: str, role: str, text: str) -> None:
 
 def get_transcript_rows(session_id: str) -> list[dict]:
     """Ordered turns for the post-session analysis job."""
+    # Ordered by id — the table has no created_at column.
     res = (
         _client()
         .table("transcripts")
         .select("id, role, text")
         .eq("session_id", session_id)
-        .order("created_at")
         .order("id")
         .execute()
     )
