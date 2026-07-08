@@ -1127,6 +1127,24 @@ Rest of the Home redesign analysis (free-text situation input, resume
 card, /me/stats) parked as next items; resume-with-memory needs
 `resume_session_id` through /token → dispatch → agent context.
 
+### 2026-07-08 — Fixes: transcript ordering + patient turn-taking
+
+1. **"Couldn't load this conversation"** — the transcripts table has no
+   `created_at` column (original schema); both the transcript endpoint
+   and the analysis job ordered by it and crashed. Silent double-bug:
+   sessions also stayed untitled because analysis failed on the same
+   query. Fix: order by serial `id` (insertion order). Verified against
+   prod data (48-turn exam session loads).
+2. **Echo interrupting thinking pauses** — Deepgram's default
+   endpointing (~10ms silence) finalizes a learner's turn the instant
+   they pause to find a word. Raised to `endpointing=800ms` +
+   `utterance_end_ms=1500`, tunable via `STT_ENDPOINTING_MS` /
+   `STT_UTTERANCE_END_MS` env vars on the agent — tune to taste without
+   code changes. Tradeoff: Echo's replies start ~0.8s later; right
+   call for a language-learning product.
+3. Local agent venv upgraded to Pipecat 1.5.0 to match the pinned prod
+   version (was 1.4, the drift that caused the phantom-user bug).
+
 ### Technical debt
 
 - **Consolidate Railway services into one project** (2026-07-05): API and
