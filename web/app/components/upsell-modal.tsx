@@ -37,13 +37,13 @@ export function UpsellModal({ open, onClose }: UpsellModalProps) {
       >
         <div className="flex flex-col gap-2">
           <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--color-accent)]">
-            Want more time?
+            ¿Quieres más tiempo?
           </span>
           <h2 className="font-display font-bold text-[22px] leading-tight">
-            Premium gives you 30 minutes a day.
+            Premium te da 30 minutos al día.
           </h2>
           <p className="text-[14px] text-[var(--color-text-muted)]">
-            For when you&apos;re in the flow and the timer feels mean.
+            Para cuando estás en racha y el temporizador se siente cruel.
           </p>
         </div>
 
@@ -54,14 +54,14 @@ export function UpsellModal({ open, onClose }: UpsellModalProps) {
             className="h-[50px] rounded-full bg-[var(--color-btn)] text-[var(--color-btn-text)] text-[14px] font-bold flex items-center justify-center hover:-translate-y-[1px] transition-transform"
             style={{ boxShadow: "var(--shadow-pill)" }}
           >
-            See Premium
+            Ver Premium
           </Link>
           <button
             type="button"
             onClick={onClose}
             className="h-[44px] text-[13px] text-[var(--color-text-soft)] hover:text-[var(--color-ink)] transition-colors"
           >
-            Not now
+            Ahora no
           </button>
         </div>
       </div>

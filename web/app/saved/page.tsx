@@ -15,7 +15,7 @@ export default function SavedPage() {
     if (!isLoaded || !isSignedIn) return;
     listPhrases(getToken)
       .then(setPhrases)
-      .catch(() => setError("Couldn't load your phrases."));
+      .catch(() => setError("No pudimos cargar tus frases."));
   }, [isLoaded, isSignedIn, getToken]);
 
   async function handleDelete(id: string) {
@@ -32,10 +32,10 @@ export default function SavedPage() {
     <AppShell>
       <div className="max-w-[1040px] mx-auto px-[clamp(22px,4vw,56px)] pt-[clamp(30px,5vw,64px)] pb-20">
         <h1 className="font-display text-[clamp(28px,3.5vw,40px)]">
-          Saved phrases
+          Frases guardadas
         </h1>
         <p className="text-[15px] text-[var(--color-text-muted)] mt-2.5">
-          The phrases you saved from your conversations.
+          Las frases que guardaste de tus conversaciones.
         </p>
 
         {error && <p className="text-[14px] text-[#C0563E] mt-7">{error}</p>}
@@ -59,18 +59,18 @@ export default function SavedPage() {
               </svg>
             </div>
             <div className="font-bold text-[18px] tracking-[-0.01em]">
-              Nothing saved yet
+              Aún no has guardado nada
             </div>
             <p className="text-[14px] text-[var(--color-text-soft)] leading-[1.5] max-w-[380px]">
-              When Echo gently corrects you, open the transcript and tap
-              “Save phrase” — it'll be kept here to review any time.
+              Cuando Echo te corrija suavemente, abre la transcripción y toca
+              “Guardar frase” — quedará aquí para repasar cuando quieras.
             </p>
             <Link
               href="/talk"
               className="mt-2 h-12 px-8 rounded-full bg-[var(--color-btn)] text-[var(--color-btn-text)] font-bold text-[15px] inline-flex items-center hover:-translate-y-[2px] active:translate-y-0 transition-transform"
               style={{ boxShadow: "var(--shadow-pill)" }}
             >
-              Start a conversation
+              Iniciar una conversación
             </Link>
           </div>
         )}
@@ -100,7 +100,7 @@ function PhraseCard({ p, onDelete }: { p: Phrase; onDelete: () => void }) {
         <button
           type="button"
           onClick={onDelete}
-          title="Remove from saved"
+          title="Quitar de guardadas"
           className="flex-none mt-0.5 text-[var(--color-accent)] hover:text-[#C0563E] transition-colors cursor-pointer"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none">
@@ -124,7 +124,7 @@ function PhraseCard({ p, onDelete }: { p: Phrase; onDelete: () => void }) {
             href={`/history/${p.session_id}`}
             className="text-[12px] font-semibold text-[var(--color-text-faint)] hover:text-[var(--color-accent)] transition-colors"
           >
-            From this conversation →
+            De esta conversación →
           </Link>
         )}
       </div>

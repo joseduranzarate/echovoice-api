@@ -11,10 +11,10 @@ export default function BillingSuccessPage() {
 
         <div className="flex flex-col gap-2">
           <h1 className="font-display font-bold text-[clamp(28px,5vw,38px)]">
-            You&apos;re in. Welcome to Premium.
+            Listo. Bienvenido a Premium.
           </h1>
           <p className="text-[15px] text-[var(--color-text-muted)] max-w-[360px]">
-            Thirty minutes a day, your full history, the works. Go talk.
+            Treinta minutos al día, todo tu historial, todo. Ve a hablar.
           </p>
         </div>
 
@@ -24,18 +24,18 @@ export default function BillingSuccessPage() {
             className="h-[56px] rounded-full bg-[var(--color-btn)] text-[var(--color-btn-text)] text-[15px] font-bold flex items-center justify-center hover:-translate-y-[2px] active:translate-y-0 transition-transform"
             style={{ boxShadow: "var(--shadow-pill)" }}
           >
-            Start a conversation
+            Iniciar una conversación
           </Link>
           <Link
             href="/settings"
             className="text-[14px] text-[var(--color-text-soft)] hover:text-[var(--color-ink)] transition-colors"
           >
-            Manage subscription
+            Gestionar suscripción
           </Link>
         </div>
 
         <p className="text-[12px] text-[var(--color-text-faint)]">
-          Your receipt is on its way by email.
+          Tu recibo va en camino por correo.
         </p>
       </div>
     </main>

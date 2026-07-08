@@ -1145,6 +1145,24 @@ card, /me/stats) parked as next items; resume-with-memory needs
 3. Local agent venv upgraded to Pipecat 1.5.0 to match the pinned prod
    version (was 1.4, the drift that caused the phantom-user bug).
 
+### 2026-07-08 — UI en español (web + iOS)
+
+All user-facing copy hard-swapped to Spanish (Latin American, informal
+tú) — the learner's language; **Echo still speaks English**, that's the
+product. Decisions:
+
+- Hard swap, no i18n framework — overkill until a second locale exists
+- Values sent to the API stay English (`level: "beginner"`, exam
+  markers, tags) — only display labels translated. iOS Setup got a
+  label/value `Option` split to keep this true
+- `html lang="es"` + Spanish metadata
+- `/admin` stays in English (internal, founder-only)
+- Agent untouched (English conversations, English analysis titles)
+
+Copy highlights: "Por fin, un lugar para hablar." / "¿Hablamos?" /
+"Habla con Echo" / "Despertando a Echo…" / "Corrección suave" /
+"Frases guardadas" / "Diste todo por hoy." / exam badge "EXAMEN".
+
 ### Technical debt
 
 - **Consolidate Railway services into one project** (2026-07-05): API and

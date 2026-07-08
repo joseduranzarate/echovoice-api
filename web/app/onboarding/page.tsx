@@ -11,16 +11,16 @@ type Level = OnboardingAnswers["level"];
 type Topic = OnboardingAnswers["topic"];
 
 const LEVELS: Array<{ id: Level; label: string; hint: string }> = [
-  { id: "beginner", label: "Just starting", hint: "I know some words" },
-  { id: "intermediate", label: "Getting there", hint: "I can hold a chat" },
-  { id: "advanced", label: "Polishing", hint: "I want it to flow" },
+  { id: "beginner", label: "Recién empiezo", hint: "Conozco algunas palabras" },
+  { id: "intermediate", label: "En camino", hint: "Puedo mantener una charla" },
+  { id: "advanced", label: "Puliendo", hint: "Quiero que fluya" },
 ];
 
 const TOPICS: Array<{ id: Topic; label: string; hint: string }> = [
-  { id: "casual", label: "Everyday talk", hint: "Small talk, day-to-day" },
-  { id: "work", label: "At work", hint: "Meetings, emails, standups" },
-  { id: "travel", label: "Traveling", hint: "Asking, ordering, exploring" },
-  { id: "interviews", label: "Interviews", hint: "Job conversations" },
+  { id: "casual", label: "Vida diaria", hint: "Charla casual, día a día" },
+  { id: "work", label: "En el trabajo", hint: "Reuniones, correos, standups" },
+  { id: "travel", label: "Viajando", hint: "Preguntar, pedir, explorar" },
+  { id: "interviews", label: "Entrevistas", hint: "Conversaciones de trabajo" },
 ];
 
 export default function OnboardingPage() {
@@ -65,10 +65,10 @@ export default function OnboardingPage() {
           <section className="w-full flex flex-col items-center gap-6 animate-fade-up">
             <div className="flex flex-col items-center gap-2 text-center">
               <h1 className="font-display font-bold text-[clamp(26px,4.5vw,34px)]">
-                Where are you with English?
+                ¿Cómo vas con el inglés?
               </h1>
               <p className="text-[14px] text-[var(--color-text-muted)]">
-                Pick the one that feels closest. You can change this later.
+                Elige la que más se acerque. Puedes cambiarlo después.
               </p>
             </div>
 
@@ -90,10 +90,10 @@ export default function OnboardingPage() {
           <section className="w-full flex flex-col items-center gap-6 animate-fade-up">
             <div className="flex flex-col items-center gap-2 text-center">
               <h1 className="font-display font-bold text-[clamp(26px,4.5vw,34px)]">
-                What do you want to talk about?
+                ¿De qué quieres hablar?
               </h1>
               <p className="text-[14px] text-[var(--color-text-muted)]">
-                We&apos;ll start there. The conversation goes where you take it.
+                Empezaremos por ahí. La conversación va a donde tú la lleves.
               </p>
             </div>
 
@@ -114,7 +114,7 @@ export default function OnboardingPage() {
               onClick={() => setStep(0)}
               className="text-[14px] text-[var(--color-text-soft)] hover:text-[var(--color-ink)] transition-colors"
             >
-              ← Back
+              ← Atrás
             </button>
           </section>
         )}

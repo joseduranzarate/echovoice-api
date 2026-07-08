@@ -5,7 +5,7 @@ struct HomeScreen: View {
 
     private var daypart: String {
         let h = Calendar.current.component(.hour, from: Date())
-        return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening"
+        return h < 12 ? "Buenos días" : h < 18 ? "Buenas tardes" : "Buenas noches"
     }
 
     private var remaining: String {
@@ -32,15 +32,15 @@ struct HomeScreen: View {
                     }
                     .padding(.bottom, 26)
 
-                    Text("Hey \(router.userName),\nready to speak?")
+                    Text("Hola \(router.userName),\n¿hablamos?")
                         .font(.jakarta(28, .heavy))
                         .tracking(-0.7)
                         .lineSpacing(2)
                         .foregroundStyle(Theme.ink)
 
-                    (Text("You've got ")
+                    (Text("Te quedan ")
                         + Text(remaining).font(.jakarta(15, .bold)).foregroundStyle(Theme.accent)
-                        + Text(" of practice left today."))
+                        + Text(" de práctica hoy."))
                         .font(.jakarta(15))
                         .foregroundStyle(Theme.textMuted)
                         .padding(.top, 10)
@@ -62,7 +62,7 @@ struct HomeScreen: View {
                                         .font(.system(size: 12, weight: .semibold))
                                     Text(e.label)
                                         .font(.jakarta(14, .semibold))
-                                    Text("EXAM")
+                                    Text("EXAMEN")
                                         .font(.jakarta(10, .bold))
                                         .tracking(0.5)
                                         .foregroundStyle(.white)
@@ -90,10 +90,10 @@ struct HomeScreen: View {
                         HStack(spacing: 15) {
                             OrbView(size: 52)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Talk to Echo")
+                                Text("Habla con Echo")
                                     .font(.jakarta(19, .bold))
                                     .foregroundStyle(.white)
-                                Text("Free-flowing conversation, your pace")
+                                Text("Conversación libre, a tu ritmo")
                                     .font(.jakarta(13))
                                     .foregroundStyle(.white.opacity(0.6))
                             }
@@ -117,12 +117,12 @@ struct HomeScreen: View {
 
                     // Scenarios
                     HStack {
-                        Text("Practice scenarios")
+                        Text("Escenarios de práctica")
                             .font(.jakarta(18, .bold))
                             .tracking(-0.2)
                             .foregroundStyle(Theme.ink)
                         Spacer()
-                        Button("See all") { router.go(.history) }
+                        Button("Ver todo") { router.go(.history) }
                             .font(.jakarta(14, .semibold))
                             .foregroundStyle(Theme.accent)
                             .buttonStyle(.plain)

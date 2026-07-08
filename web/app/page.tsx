@@ -26,7 +26,7 @@ export default async function Landing() {
           href="/sign-in"
           className="text-[15px] text-[var(--color-text-muted)] hover:text-[var(--color-ink)] transition-colors"
         >
-          Sign in
+          Iniciar sesión
         </Link>
       </header>
 
@@ -35,17 +35,17 @@ export default async function Landing() {
           <div className="flex items-center gap-2.5">
             <span className="block w-1.5 h-1.5 rounded-full bg-[var(--color-accent)]" />
             <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--color-accent)]">
-              Voice-first practice
+              Práctica de voz primero
             </span>
           </div>
 
           <h1 className="font-display text-[clamp(40px,7vw,76px)] leading-[1.02]">
-            Finally, somewhere to&nbsp;speak.
+            Por fin, un lugar para&nbsp;hablar.
           </h1>
 
           <p className="text-[17px] leading-relaxed text-[var(--color-text-muted)] max-w-[420px]">
-            Practice speaking English with a patient AI partner. Free, three
-            minutes a day.
+            Practica tu inglés hablado con un compañero de IA paciente. Gratis,
+            tres minutos al día.
           </p>
 
           <div className="flex flex-wrap items-center gap-5 pt-2">
@@ -54,10 +54,10 @@ export default async function Landing() {
               className="inline-flex items-center justify-center h-[56px] px-9 rounded-full bg-[var(--color-btn)] text-[var(--color-btn-text)] text-[16px] font-bold hover:-translate-y-[2px] active:translate-y-0 transition-transform"
               style={{ boxShadow: "var(--shadow-pill)" }}
             >
-              Start talking
+              Empieza a hablar
             </Link>
             <span className="text-[13px] text-[var(--color-text-soft)]">
-              No appointment&nbsp;·&nbsp;No judgment&nbsp;·&nbsp;Available at 2am
+              Sin citas&nbsp;·&nbsp;Sin juicios&nbsp;·&nbsp;Disponible a las 2am
             </span>
           </div>
         </section>

@@ -65,7 +65,7 @@ export default function SettingsPage() {
   }
 
   const email = user?.primaryEmailAddress?.emailAddress ?? "—";
-  const name = user?.firstName ?? user?.fullName ?? "Friend";
+  const name = user?.firstName ?? user?.fullName ?? "Amigo";
   const isPremium = quota?.plan === "premium";
 
   return (
@@ -89,20 +89,20 @@ export default function SettingsPage() {
                   background: isPremium ? "var(--color-accent)" : "var(--color-gold)",
                 }}
               />
-              {isPremium ? "Premium plan" : "Free plan"}
+              {isPremium ? "Plan Premium" : "Plan gratis"}
             </div>
           </div>
         </div>
 
         {/* Account */}
         <div className="text-[13px] font-bold text-[var(--color-text-soft)] mt-9 mb-3 px-1">
-          Account
+          Cuenta
         </div>
         <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[20px] overflow-hidden">
-          <Row label="Signed in as" value={email} />
+          <Row label="Sesión iniciada como" value={email} />
           <Row
             label="Plan"
-            value={isPremium ? "Premium · 30 min/day" : "Free · 3 min/day"}
+            value={isPremium ? "Premium · 30 min/día" : "Gratis · 3 min/día"}
             valueAccent
             last
             trailing={
@@ -112,7 +112,7 @@ export default function SettingsPage() {
                 disabled={!quota || billingLoading}
                 className="text-[13px] font-bold text-[var(--color-accent)] hover:text-[var(--color-accent-deep)] disabled:opacity-50 transition-colors cursor-pointer"
               >
-                {billingLoading ? "Opening…" : isPremium ? "Manage" : "Upgrade"}
+                {billingLoading ? "Abriendo…" : isPremium ? "Gestionar" : "Mejorar"}
               </button>
             }
           />
@@ -120,11 +120,11 @@ export default function SettingsPage() {
 
         {/* Practice */}
         <div className="text-[13px] font-bold text-[var(--color-text-soft)] mt-[26px] mb-3 px-1">
-          Practice
+          Práctica
         </div>
         <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[20px] overflow-hidden">
-          <Row label="Language" value="English" />
-          <Row label="Voice" value="Echo (default)" last />
+          <Row label="Idioma" value="Inglés" />
+          <Row label="Voz" value="Echo (predeterminada)" last />
         </div>
 
         <div className="mt-[26px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[20px] overflow-hidden">
@@ -133,7 +133,7 @@ export default function SettingsPage() {
             onClick={handleSignOut}
             className="w-full text-left px-5 py-[17px] text-[16px] text-[var(--color-ink)] cursor-pointer border-b border-[var(--color-border-soft)] hover:bg-[var(--color-accent-soft)] transition-colors"
           >
-            Sign out
+            Cerrar sesión
           </button>
           <button
             type="button"
@@ -142,10 +142,10 @@ export default function SettingsPage() {
             className="w-full text-left px-5 py-[17px] text-[16px] text-[#C5523A] cursor-pointer disabled:opacity-60 hover:bg-[#FBEDE9] transition-colors"
           >
             {deleting
-              ? "Deleting your account…"
+              ? "Eliminando tu cuenta…"
               : deleteArmed
-              ? "Are you sure? Tap again to permanently delete everything"
-              : "Delete account"}
+              ? "¿Estás seguro? Toca de nuevo para eliminar todo permanentemente"
+              : "Eliminar cuenta"}
           </button>
         </div>
       </div>

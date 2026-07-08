@@ -71,10 +71,10 @@ struct ConfigNeededView: View {
             Theme.screenGradient.ignoresSafeArea()
             VStack(spacing: 16) {
                 OrbView(size: 72)
-                Text("Almost there")
+                Text("Casi listo")
                     .font(.jakarta(26, .heavy))
                     .foregroundStyle(Theme.ink)
-                Text("Open Sources/Config.swift and paste your Clerk publishable key and API URL (both are in web/.env.local). Then rebuild.")
+                Text("Abre Sources/Config.swift y pega tu clave publicable de Clerk y la URL del API (ambas están en web/.env.local). Luego recompila.")
                     .font(.jakarta(15))
                     .multilineTextAlignment(.center)
                     .foregroundStyle(Theme.textMuted)

@@ -36,7 +36,7 @@ final class Router: ObservableObject {
     @Published var pendingScenario: String?
 
     var signedIn: Bool { Clerk.shared.user != nil }
-    var userName: String { Clerk.shared.user?.firstName ?? "you" }
+    var userName: String { Clerk.shared.user?.firstName ?? "tú" }
     var userEmail: String { Clerk.shared.user?.emailAddresses.first?.emailAddress ?? "—" }
     var isPremium: Bool { quota?.plan == "premium" }
 

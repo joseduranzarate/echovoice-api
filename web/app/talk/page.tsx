@@ -177,7 +177,7 @@ function TalkInner() {
         await Promise.race([
           agentReady,
           new Promise<void>((_, reject) =>
-            setTimeout(() => reject(new Error("Echo didn't join in time")), 12_000),
+            setTimeout(() => reject(new Error("Echo no se conectó a tiempo")), 12_000),
           ),
         ]);
       }
@@ -195,7 +195,7 @@ function TalkInner() {
       roomRef.current = null;
       setPhase("error");
       setOrbState("idle");
-      setErrorMsg(e instanceof Error ? e.message : "Couldn't connect");
+      setErrorMsg(e instanceof Error ? e.message : "No pudimos conectar");
     }
   }
 
@@ -212,33 +212,33 @@ function TalkInner() {
   }
 
   const greeting = (() => {
-    const name = user?.firstName || "you";
+    const name = user?.firstName || "tú";
     const hour = new Date().getHours();
-    if (hour < 12) return `Good morning, ${name}.`;
-    if (hour < 18) return `Good afternoon, ${name}.`;
-    return `Good evening, ${name}.`;
+    if (hour < 12) return `Buenos días, ${name}.`;
+    if (hour < 18) return `Buenas tardes, ${name}.`;
+    return `Buenas noches, ${name}.`;
   })();
 
   const stateLabel = (() => {
     switch (phase) {
       case "connecting":
-        return "Connecting…";
+        return "Conectando…";
       case "waking":
-        return "Waking up Echo…";
+        return "Despertando a Echo…";
       case "ending":
-        return "Wrapping up…";
+        return "Terminando…";
       case "error":
-        return errorMsg ?? "Couldn't connect";
+        return errorMsg ?? "No pudimos conectar";
       case "live":
         return orbState === "speaking"
-          ? "Echo is speaking"
+          ? "Echo está hablando"
           : !micOn
-          ? "Mic is off"
+          ? "Micrófono apagado"
           : orbState === "listening"
-          ? "Listening…"
-          : "Take your time";
+          ? "Escuchando…"
+          : "Tómate tu tiempo";
       default:
-        return "Tap the orb to start speaking";
+        return "Toca el orbe para empezar a hablar";
     }
   })();
 
@@ -268,7 +268,7 @@ function TalkInner() {
           )}
           {phase !== "live" && quota && (
             <span className="tabular-nums text-[var(--color-text-faint)]">
-              · {formatTime(quota.daily_remaining_s + quota.trial_remaining_s)} left today
+              · {formatTime(quota.daily_remaining_s + quota.trial_remaining_s)} restantes hoy
             </span>
           )}
         </div>
@@ -306,7 +306,7 @@ function TalkInner() {
                 {greeting}
               </h1>
               <p className="text-[14px] text-[var(--color-text-muted)]">
-                Tap the orb — or the button below — to start.
+                Toca el orbe — o el botón de abajo — para empezar.
               </p>
             </>
           )}
@@ -314,7 +314,7 @@ function TalkInner() {
             <div className="flex flex-col items-center gap-2 animate-fade-up">
               {userLine && (
                 <p className="text-[15px] leading-snug text-[var(--color-text-soft)]">
-                  <span className="font-bold mr-1.5">You</span>
+                  <span className="font-bold mr-1.5">Tú</span>
                   {userLine}
                 </p>
               )}
@@ -326,7 +326,7 @@ function TalkInner() {
               )}
               {!userLine && !echoLine && (
                 <p className="text-[14px] text-[var(--color-text-faint)]">
-                  Captions will appear as you talk.
+                  Los subtítulos aparecerán mientras hablas.
                 </p>
               )}
             </div>
@@ -342,7 +342,7 @@ function TalkInner() {
               className="h-[60px] px-[52px] rounded-full border-none bg-[var(--color-btn)] text-[var(--color-btn-text)] font-bold text-[17px] cursor-pointer hover:-translate-y-[2px] active:translate-y-0 transition-transform"
               style={{ boxShadow: "var(--shadow-pill)" }}
             >
-              {phase === "error" ? "Try again" : "Start talking"}
+              {phase === "error" ? "Intentar de nuevo" : "Empezar a hablar"}
             </button>
           )}
           {(phase === "live" || busy || phase === "ending") && (
@@ -351,7 +351,7 @@ function TalkInner() {
                 type="button"
                 onClick={toggleMic}
                 disabled={phase !== "live"}
-                title={micOn ? "Mute mic" : "Unmute mic"}
+                title={micOn ? "Silenciar micrófono" : "Activar micrófono"}
                 className="w-[60px] h-[60px] rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[#3C3E2E] flex items-center justify-center cursor-pointer disabled:opacity-50 hover:border-[var(--color-accent)] transition-colors"
               >
                 {micOn ? (
@@ -371,7 +371,7 @@ function TalkInner() {
                 type="button"
                 onClick={() => setCaptionsOn((v) => !v)}
                 disabled={phase !== "live"}
-                title={captionsOn ? "Hide captions" : "Show captions"}
+                title={captionsOn ? "Ocultar subtítulos" : "Mostrar subtítulos"}
                 className={`w-[60px] h-[60px] rounded-full flex items-center justify-center cursor-pointer disabled:opacity-50 transition-colors border ${
                   captionsOn
                     ? "bg-[var(--color-accent-soft)] border-[var(--color-accent)] text-[var(--color-accent)]"
@@ -390,7 +390,7 @@ function TalkInner() {
                 className="h-[60px] px-7 sm:px-[52px] rounded-full border-none bg-[var(--color-btn)] text-[var(--color-btn-text)] font-bold text-[16px] sm:text-[17px] cursor-pointer disabled:opacity-50 hover:-translate-y-[2px] active:translate-y-0 transition-transform whitespace-nowrap"
                 style={{ boxShadow: "var(--shadow-pill)" }}
               >
-                End &amp; review
+                Terminar y revisar
               </button>
             </>
           )}
@@ -401,9 +401,9 @@ function TalkInner() {
 }
 
 function formatScenario(s: string): string {
-  if (s === "exam:ielts-speaking") return "Mock exam: IELTS Speaking";
-  if (s === "exam:toefl-speaking") return "Mock exam: TOEFL Speaking";
-  return `Practicing: ${s}`;
+  if (s === "exam:ielts-speaking") return "Examen de práctica: IELTS Speaking";
+  if (s === "exam:toefl-speaking") return "Examen de práctica: TOEFL Speaking";
+  return `Practicando: ${s}`;
 }
 
 function formatTime(s: number): string {

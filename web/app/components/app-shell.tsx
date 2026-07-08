@@ -52,7 +52,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <nav className="flex flex-col gap-1.5 mt-[38px]">
             <NavItem
               href="/"
-              label="Home"
+              label="Inicio"
               active={pathname === "/"}
               icon={
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
@@ -62,7 +62,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             />
             <NavItem
               href="/history"
-              label="History"
+              label="Historial"
               active={pathname.startsWith("/history") || pathname.startsWith("/summary")}
               icon={
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
@@ -74,7 +74,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {/* Talk — the accent pill */}
             <Link
               href="/talk"
-              title="Talk"
+              title="Hablar"
               className="flex items-center gap-[13px] w-full px-3.5 py-3 my-1.5 rounded-[14px] font-semibold text-[15px] text-white bg-[var(--color-accent)]"
               style={{ boxShadow: "0 14px 28px -12px var(--color-glow)" }}
             >
@@ -83,11 +83,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <path d="M4 10v4M8 6v12M12 3v18M16 6v12M20 10v4" />
                 </svg>
               </span>
-              <span className="hidden md:inline whitespace-nowrap overflow-hidden">Talk</span>
+              <span className="hidden md:inline whitespace-nowrap overflow-hidden">Hablar</span>
             </Link>
             <NavItem
               href="/saved"
-              label="Saved"
+              label="Guardadas"
               active={pathname.startsWith("/saved")}
               icon={
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
@@ -97,7 +97,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             />
             <NavItem
               href="/settings"
-              label="Profile"
+              label="Perfil"
               active={pathname.startsWith("/settings")}
               icon={
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
@@ -112,14 +112,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {!isPremium && quota && (
               <div className="hidden md:block bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[18px] px-4 py-[18px]">
                 <div className="text-[12px] font-bold uppercase tracking-[0.03em] text-[var(--color-gold)]">
-                  Free plan
+                  Plan gratis
                 </div>
                 <div className="text-[14px] text-[var(--color-text-muted)] leading-[1.45] mt-[7px]">
-                  You have{" "}
+                  Te quedan{" "}
                   <strong className="text-[var(--color-ink)]">
                     {formatClock(remaining ?? 0)}
                   </strong>{" "}
-                  of practice left today.
+                  de práctica hoy.
                 </div>
                 <button
                   type="button"
@@ -127,7 +127,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   className="mt-3.5 w-full h-10 rounded-[11px] bg-[var(--color-btn)] text-[var(--color-btn-text)] font-bold text-[14px] cursor-pointer"
                   style={{ boxShadow: "0 12px 24px -14px rgba(150,130,50,0.42)" }}
                 >
-                  Upgrade
+                  Mejorar
                 </button>
               </div>
             )}
@@ -141,7 +141,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   {name}
                 </span>
                 <span className="text-[12px] text-[var(--color-text-faint)]">
-                  {isPremium ? "Premium plan" : "Free plan"}
+                  {isPremium ? "Plan Premium" : "Plan gratis"}
                 </span>
               </span>
             </Link>

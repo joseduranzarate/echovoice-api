@@ -3,8 +3,8 @@ import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Echo — somewhere to speak",
-  description: "Practice speaking English with a patient AI partner.",
+  title: "Echo — un lugar para hablar",
+  description: "Practica inglés hablado con un compañero de IA paciente.",
 };
 
 export default function RootLayout({
@@ -14,7 +14,7 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en" className="h-full antialiased">
+      <html lang="es" className="h-full antialiased">
         <head>
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

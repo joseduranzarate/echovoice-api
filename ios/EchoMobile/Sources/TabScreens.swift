@@ -33,7 +33,7 @@ struct HistoryScreen: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 0) {
                     HStack {
-                        Text("History")
+                        Text("Historial")
                             .font(.jakarta(30, .heavy))
                             .tracking(-0.6)
                             .foregroundStyle(Theme.ink)
@@ -57,7 +57,7 @@ struct HistoryScreen: View {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 16, weight: .medium))
                             .foregroundStyle(Theme.sub)
-                        TextField("Search your conversations…", text: $query)
+                        TextField("Busca tus conversaciones…", text: $query)
                             .font(.jakarta(15))
                             .autocorrectionDisabled()
                     }
@@ -68,20 +68,20 @@ struct HistoryScreen: View {
 
                     // Stats
                     HStack(spacing: 9) {
-                        statCard("\(weekStats.count)", "this week", color: Theme.ink)
-                        statCard("\(weekStats.minutes)", "minutes", color: Theme.ink)
+                        statCard("\(weekStats.count)", "esta semana", color: Theme.ink)
+                        statCard("\(weekStats.minutes)", "minutos", color: Theme.ink)
                         statCard("\(router.sessions.count)", "total", color: Theme.accent)
                     }
                     .padding(.bottom, 26)
 
-                    Text("Recent conversations")
+                    Text("Conversaciones recientes")
                         .font(.jakarta(13, .bold))
                         .tracking(0.2)
                         .foregroundStyle(Theme.textSoft)
                         .padding(.bottom, 12)
 
                     if router.sessions.isEmpty {
-                        Text("Your conversations will show up here once you start talking.")
+                        Text("Tus conversaciones aparecerán aquí cuando empieces a hablar.")
                             .font(.jakarta(14))
                             .foregroundStyle(Theme.textMuted)
                             .padding(.vertical, 12)
@@ -136,7 +136,7 @@ struct HistoryScreen: View {
                         .tracking(-0.2)
                         .foregroundStyle(Theme.ink)
                         .lineLimit(1)
-                    Text(s.preview ?? "\(max(1, s.durationS / 60)) min conversation")
+                    Text(s.preview ?? "Conversación de \(max(1, s.durationS / 60)) min")
                         .font(.jakarta(13))
                         .foregroundStyle(Theme.textSoft)
                         .lineLimit(1)
@@ -170,12 +170,12 @@ struct SavedScreen: View {
 
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("Saved phrases")
+                    Text("Frases guardadas")
                         .font(.jakarta(30, .heavy))
                         .tracking(-0.6)
                         .foregroundStyle(Theme.ink)
                         .padding(.bottom, 6)
-                    Text("The phrases you saved from your conversations.")
+                    Text("Las frases que guardaste de tus conversaciones.")
                         .font(.jakarta(14))
                         .foregroundStyle(Theme.textMuted)
                         .padding(.bottom, 24)
@@ -208,10 +208,10 @@ struct SavedScreen: View {
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .fill(Theme.accentSoft)
                 )
-            Text("Nothing saved yet")
+            Text("Aún no has guardado nada")
                 .font(.jakarta(18, .bold))
                 .foregroundStyle(Theme.ink)
-            Text("When Echo gently corrects you, open the transcript and tap “Save phrase”.")
+            Text("Cuando Echo te corrija suavemente, abre la transcripción y toca “Guardar frase”.")
                 .font(.jakarta(14))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(Theme.textSoft)
@@ -292,7 +292,7 @@ struct ProfileScreen: View {
                             Circle()
                                 .fill(router.isPremium ? Theme.accent : Theme.gold)
                                 .frame(width: 5, height: 5)
-                            Text(router.isPremium ? "PREMIUM" : "FREE PLAN")
+                            Text(router.isPremium ? "PREMIUM" : "PLAN GRATIS")
                                 .font(.jakarta(12, .bold))
                                 .tracking(0.4)
                                 .foregroundStyle(router.isPremium ? Theme.accent : Theme.gold)
@@ -307,23 +307,23 @@ struct ProfileScreen: View {
                     .frame(maxWidth: .infinity)
                     .padding(.bottom, 26)
 
-                    sectionHeader("Account")
+                    sectionHeader("Cuenta")
                     settingsCard {
-                        settingsRow("Signed in as", value: router.userEmail)
+                        settingsRow("Sesión iniciada como", value: router.userEmail)
                         divider
                         settingsRow(
                             "Plan",
-                            value: router.isPremium ? "Premium · 30 min/day" : "Free · 3 min/day",
+                            value: router.isPremium ? "Premium · 30 min/día" : "Gratis · 3 min/día",
                             valueColor: Theme.accent, valueBold: true
                         )
                     }
                     .padding(.bottom, 20)
 
-                    sectionHeader("Practice")
+                    sectionHeader("Práctica")
                     settingsCard {
-                        settingsRow("Language", value: "English")
+                        settingsRow("Idioma", value: "Inglés")
                         divider
-                        settingsRow("Voice", value: "Echo (default)")
+                        settingsRow("Voz", value: "Echo (predeterminada)")
                     }
                     .padding(.bottom, 20)
 
@@ -331,7 +331,7 @@ struct ProfileScreen: View {
                         Button {
                             router.signOut()
                         } label: {
-                            Text("Sign out")
+                            Text("Cerrar sesión")
                                 .font(.jakarta(15))
                                 .foregroundStyle(Theme.inkDark)
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -363,9 +363,9 @@ struct ProfileScreen: View {
     }
 
     private var deleteLabel: String {
-        if deleting { return "Deleting your account…" }
-        if deleteArmed { return "Are you sure? Tap again to permanently delete everything" }
-        return "Delete account"
+        if deleting { return "Eliminando tu cuenta…" }
+        if deleteArmed { return "¿Estás seguro? Toca de nuevo para eliminar todo permanentemente" }
+        return "Eliminar cuenta"
     }
 
     private func handleDelete() {

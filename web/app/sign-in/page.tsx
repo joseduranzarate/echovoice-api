@@ -42,10 +42,10 @@ export default function SignInPage() {
 
         <div className="flex flex-col items-center gap-2 text-center">
           <h1 className="font-display font-bold text-[clamp(28px,5vw,38px)] leading-[1.05]">
-            Let&apos;s get you talking.
+            Empecemos a hablar.
           </h1>
           <p className="text-[15px] text-[var(--color-text-muted)] max-w-[320px]">
-            One tap sign-in. No forms, no passwords — we keep it simple.
+            Inicia sesión con un toque. Sin formularios, sin contraseñas.
           </p>
         </div>
 
@@ -56,7 +56,7 @@ export default function SignInPage() {
             className="h-[56px] rounded-full bg-white border-[1.5px] border-[var(--color-border)] hover:border-[var(--color-ink)] disabled:opacity-60 transition-colors flex items-center justify-center gap-3 text-[15px] font-medium"
           >
             <GoogleDot />
-            {loading === "google" ? "Opening Google…" : "Continue with Google"}
+            {loading === "google" ? "Abriendo Google…" : "Continuar con Google"}
           </button>
 
           <button
@@ -65,7 +65,7 @@ export default function SignInPage() {
             className="h-[56px] rounded-full bg-white border-[1.5px] border-[var(--color-border)] hover:border-[var(--color-ink)] disabled:opacity-60 transition-colors flex items-center justify-center gap-3 text-[15px] font-medium"
           >
             <span className="w-5 h-5 rounded-full bg-[var(--color-ink)]" />
-            {loading === "apple" ? "Opening Apple…" : "Continue with Apple"}
+            {loading === "apple" ? "Abriendo Apple…" : "Continuar con Apple"}
           </button>
         </div>
 
@@ -73,7 +73,7 @@ export default function SignInPage() {
           href="/"
           className="text-[14px] text-[var(--color-text-soft)] hover:text-[var(--color-ink)] transition-colors pt-1"
         >
-          Not now
+          Ahora no
         </Link>
       </div>
     </main>

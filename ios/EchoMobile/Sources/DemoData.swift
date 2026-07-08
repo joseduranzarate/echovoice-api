@@ -1,8 +1,9 @@
 import Foundation
 
-/// Static product content (same strings the web app hardcodes).
+/// Static product content (mirrors the web app's Spanish copy). Values sent
+/// to the API stay English — only labels are localized.
 enum DemoData {
-    static let prompts = ["Order at a café", "Talk about my weekend", "Job interview", "Describe my city", "Small talk"]
+    static let prompts = ["Pedir en una cafetería", "Hablar de mi fin de semana", "Entrevista de trabajo", "Describir mi ciudad", "Charla casual"]
 
     struct Exam: Identifiable {
         let id = UUID()
@@ -24,10 +25,27 @@ enum DemoData {
     }
 
     static let scenarios: [Scenario] = [
-        .init(emoji: "☕", title: "Everyday talk", desc: "Cafes, shops, small daily moments.", bg: 0xE9ECD6),
-        .init(emoji: "💼", title: "Work & interviews", desc: "Meetings, intros, tricky questions.", bg: 0xEFE7CB),
+        .init(emoji: "☕", title: "Vida diaria", desc: "Cafés, tiendas, momentos cotidianos.", bg: 0xE9ECD6),
+        .init(emoji: "💼", title: "Trabajo y entrevistas", desc: "Reuniones, presentaciones, preguntas difíciles.", bg: 0xEFE7CB),
     ]
 
-    static let levels = ["Beginner", "Intermediate", "Advanced", "Not sure"]
-    static let topics = ["Daily conversation", "Work & professional", "Travel", "Just to chat"]
+    struct Option: Identifiable {
+        let id = UUID()
+        let label: String
+        let value: String
+    }
+
+    static let levels: [Option] = [
+        .init(label: "Principiante", value: "beginner"),
+        .init(label: "Intermedio", value: "intermediate"),
+        .init(label: "Avanzado", value: "advanced"),
+        .init(label: "No estoy seguro", value: "notsure"),
+    ]
+
+    static let topics: [Option] = [
+        .init(label: "Conversación diaria", value: "daily"),
+        .init(label: "Trabajo y profesional", value: "work"),
+        .init(label: "Viajes", value: "travel"),
+        .init(label: "Solo charlar", value: "chat"),
+    ]
 }

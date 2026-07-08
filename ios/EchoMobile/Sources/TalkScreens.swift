@@ -77,7 +77,7 @@ struct ConversationScreen: View {
                 // Controls
                 HStack(spacing: 14) {
                     if call.phase == .idle || call.isError {
-                        YellowPillButton(title: call.isError ? "Try again" : "Start talking") {
+                        YellowPillButton(title: call.isError ? "Intentar de nuevo" : "Empezar a hablar") {
                             startIfIdle()
                         }
                         .frame(maxWidth: 260)
@@ -98,7 +98,7 @@ struct ConversationScreen: View {
                         Button {
                             finishCall()
                         } label: {
-                            Text("Done")
+                            Text("Terminar")
                                 .font(.jakarta(16, .bold))
                                 .foregroundStyle(Theme.btnText)
                                 .padding(.horizontal, 44)
@@ -134,7 +134,7 @@ struct ConversationScreen: View {
 
     private var quotaLabel: String {
         guard let q = router.quota else { return "…" }
-        return "\(fmtClock(q.dailyRemainingS + q.trialRemainingS)) left today"
+        return "\(fmtClock(q.dailyRemainingS + q.trialRemainingS)) restantes hoy"
     }
 
     private var orbState: OrbState {
@@ -152,16 +152,16 @@ struct ConversationScreen: View {
 
     private var stateLabel: String {
         switch call.phase {
-        case .idle: return "Tap the orb to begin"
-        case .connecting: return "Connecting…"
-        case .waking: return "Waking up Echo…"
-        case .ending: return "Wrapping up…"
+        case .idle: return "Toca el orbe para empezar"
+        case .connecting: return "Conectando…"
+        case .waking: return "Despertando a Echo…"
+        case .ending: return "Terminando…"
         case .error(let m): return m
         case .live:
             switch call.voice {
-            case .speaking: return "Echo is speaking"
-            case .listening: return call.micOn ? "Listening…" : "Mic is off"
-            case .idle: return "Take your time"
+            case .speaking: return "Echo está hablando"
+            case .listening: return call.micOn ? "Escuchando…" : "Micrófono apagado"
+            case .idle: return "Tómate tu tiempo"
             }
         }
     }
@@ -196,7 +196,7 @@ struct LiveTranscriptScreen: View {
                             .fill(Theme.accent)
                             .frame(width: 6, height: 6)
                             .opacity(blink ? 1 : 0.3)
-                        Text("Live transcript")
+                        Text("Transcripción en vivo")
                             .font(.jakarta(12, .semibold))
                             .foregroundStyle(Color(hex: 0x3A3742))
                     }
@@ -223,7 +223,7 @@ struct LiveTranscriptScreen: View {
                                 liveLine
                             }
                             if call.phase != .live && call.turns.isEmpty {
-                                Text("Start a conversation to see the transcript here.")
+                                Text("Inicia una conversación para ver la transcripción aquí.")
                                     .font(.jakarta(13))
                                     .foregroundStyle(Theme.sub)
                                     .padding(8)
@@ -258,7 +258,7 @@ struct LiveTranscriptScreen: View {
                             router.go(.summary)
                         }
                     } label: {
-                        Text("Done")
+                        Text("Terminar")
                             .font(.jakarta(16, .bold))
                             .foregroundStyle(Theme.btnText)
                             .padding(.horizontal, 40)
@@ -327,8 +327,8 @@ func fmtClock(_ s: Int) -> String {
 
 func formatScenario(_ s: String) -> String {
     switch s {
-    case "exam:ielts-speaking": return "Mock exam: IELTS Speaking"
-    case "exam:toefl-speaking": return "Mock exam: TOEFL Speaking"
-    default: return "Practicing: \(s)"
+    case "exam:ielts-speaking": return "Examen de práctica: IELTS Speaking"
+    case "exam:toefl-speaking": return "Examen de práctica: TOEFL Speaking"
+    default: return "Practicando: \(s)"
     }
 }

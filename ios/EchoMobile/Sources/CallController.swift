@@ -54,7 +54,7 @@ final class CallController: ObservableObject {
             guard !room.remoteParticipants.isEmpty else {
                 throw NSError(
                     domain: "echo", code: 1,
-                    userInfo: [NSLocalizedDescriptionKey: "Echo didn't join in time"]
+                    userInfo: [NSLocalizedDescriptionKey: "Echo no se conectó a tiempo"]
                 )
             }
 
@@ -67,7 +67,7 @@ final class CallController: ObservableObject {
             phase = .idle
         } catch EchoAPIError.agentUnavailable {
             await room.disconnect()
-            phase = .error("Echo is unavailable right now — try again in a minute.")
+            phase = .error("Echo no está disponible ahora — inténtalo en un minuto.")
         } catch {
             await room.disconnect()
             phase = .error(error.localizedDescription)

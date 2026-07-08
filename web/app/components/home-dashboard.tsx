@@ -7,11 +7,11 @@ import { getQuota, type Quota } from "../lib/api";
 import { formatClock } from "./app-shell";
 
 const PROMPTS = [
-  "Order at a café",
-  "Talk about my weekend",
-  "Job interview",
-  "Describe my city",
-  "Small talk",
+  "Pedir en una cafetería",
+  "Hablar de mi fin de semana",
+  "Entrevista de trabajo",
+  "Describir mi ciudad",
+  "Charla casual",
 ];
 
 // Exam chips send a marker; the agent maps it to a structured mock-exam
@@ -22,10 +22,10 @@ const EXAMS = [
 ];
 
 const SCENARIOS = [
-  { emoji: "☕", title: "Everyday talk", desc: "Cafes, shops, small daily moments.", bg: "#E9ECD6" },
-  { emoji: "💼", title: "Work & interviews", desc: "Meetings, intros, tricky questions.", bg: "#EFE7CB" },
-  { emoji: "✈️", title: "Travel", desc: "Airports, directions, hotels.", bg: "#E4ECDA" },
-  { emoji: "💬", title: "Just to chat", desc: "No agenda — keep it flowing.", bg: "#ECE8D2" },
+  { emoji: "☕", title: "Vida diaria", desc: "Cafés, tiendas, momentos cotidianos.", bg: "#E9ECD6" },
+  { emoji: "💼", title: "Trabajo y entrevistas", desc: "Reuniones, presentaciones, preguntas difíciles.", bg: "#EFE7CB" },
+  { emoji: "✈️", title: "Viajes", desc: "Aeropuertos, direcciones, hoteles.", bg: "#E4ECDA" },
+  { emoji: "💬", title: "Solo charlar", desc: "Sin agenda — deja que fluya.", bg: "#ECE8D2" },
 ];
 
 export function HomeDashboard() {
@@ -44,7 +44,7 @@ export function HomeDashboard() {
 
   const hour = new Date().getHours();
   const daypart =
-    hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+    hour < 12 ? "Buenos días" : hour < 18 ? "Buenas tardes" : "Buenas noches";
   const name = user?.firstName ? `, ${user.firstName}` : "";
 
   return (
@@ -56,7 +56,7 @@ export function HomeDashboard() {
             {name}
           </div>
           <h1 className="font-display text-[clamp(30px,4vw,44px)] mt-2">
-            Ready to speak?
+            ¿Hablamos?
           </h1>
         </div>
         {remaining !== null && (
@@ -65,7 +65,7 @@ export function HomeDashboard() {
               <circle cx="12" cy="12" r="9" />
               <path d="M12 7.5v5l3 2" strokeLinecap="round" />
             </svg>
-            {formatClock(remaining)} left today
+            {formatClock(remaining)} restantes hoy
           </div>
         )}
       </div>
@@ -103,10 +103,10 @@ export function HomeDashboard() {
         />
         <div className="flex-1 min-w-0 relative">
           <div className="font-display text-[clamp(22px,2.6vw,30px)] tracking-[-0.02em]">
-            Talk to Echo
+            Habla con Echo
           </div>
           <div className="text-[clamp(14px,1.5vw,17px)] text-white/[0.62] mt-1.5 leading-[1.5]">
-            Free-flowing conversation, at your pace. Tap and just start speaking.
+            Conversación libre, a tu ritmo. Toca y empieza a hablar.
           </div>
         </div>
         <div className="relative flex-none w-[52px] h-[52px] rounded-full bg-[var(--color-btn)] hidden sm:flex items-center justify-center">
@@ -138,7 +138,7 @@ export function HomeDashboard() {
             </svg>
             {e.label}
             <span className="text-[10px] font-bold tracking-[0.05em] px-1.5 py-0.5 rounded bg-[var(--color-accent)] text-white group-hover:bg-white">
-              EXAM
+              EXAMEN
             </span>
           </Link>
         ))}
@@ -147,7 +147,7 @@ export function HomeDashboard() {
       {/* Scenario grid */}
       <div className="flex items-center justify-between mt-11 mb-[18px]">
         <h2 className="font-display text-[22px] tracking-[-0.02em]">
-          Practice scenarios
+          Escenarios de práctica
         </h2>
       </div>
       <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4">

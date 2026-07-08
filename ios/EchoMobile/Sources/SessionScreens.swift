@@ -21,7 +21,7 @@ struct SessionDetailScreen: View {
                     HStack(spacing: 12) {
                         CircleIconButton(systemName: "chevron.left") { router.go(.history) }
                         VStack(alignment: .leading, spacing: 1) {
-                            Text(session?.title ?? "Conversation")
+                            Text(session?.title ?? "Conversación")
                                 .font(.jakarta(21, .heavy))
                                 .tracking(-0.4)
                                 .foregroundStyle(Theme.ink)
@@ -37,12 +37,12 @@ struct SessionDetailScreen: View {
                     if let s = session {
                         HStack(spacing: 14) {
                             if let w = s.wordCount {
-                                statPair("\(w)", "words")
+                                statPair("\(w)", "palabras")
                             }
                             statPair("\(s.durationS / 60)", "min")
                             if let c = s.correctionCount, c > 0 {
                                 (Text("\(c)").font(.jakarta(13, .bold))
-                                    + Text(" corrections").font(.jakarta(13)))
+                                    + Text(" correcciones").font(.jakarta(13)))
                                     .foregroundStyle(Theme.accent)
                             }
                             Spacer()
@@ -56,12 +56,12 @@ struct SessionDetailScreen: View {
                     }
 
                     if failed {
-                        Text("Couldn't load this conversation.")
+                        Text("No pudimos cargar esta conversación.")
                             .font(.jakarta(14))
                             .foregroundStyle(Theme.danger)
                     } else if let turns {
                         if turns.isEmpty {
-                            Text("No transcript was recorded for this conversation.")
+                            Text("No se grabó transcripción para esta conversación.")
                                 .font(.jakarta(14))
                                 .foregroundStyle(Theme.textMuted)
                         } else {
@@ -112,8 +112,8 @@ struct SessionDetailScreen: View {
         Task {
             _ = try? await router.api.savePhrase(
                 c.to,
-                note: "Instead of “\(c.from)”.",
-                tag: "Correction",
+                note: "En lugar de “\(c.from)”.",
+                tag: "Corrección",
                 sessionId: router.selectedSessionID
             )
             savedTurnIDs.insert(t.id)
@@ -148,7 +148,7 @@ struct SessionDetailScreen: View {
                 if let c = t.correction {
                     VStack(alignment: .leading, spacing: 5) {
                         HStack {
-                            Text("GENTLE CORRECTION")
+                            Text("CORRECCIÓN SUAVE")
                                 .font(.jakarta(11, .bold))
                                 .tracking(0.6)
                                 .foregroundStyle(Theme.accent)
@@ -159,7 +159,7 @@ struct SessionDetailScreen: View {
                                 HStack(spacing: 4) {
                                     Image(systemName: savedTurnIDs.contains(t.id) ? "bookmark.fill" : "bookmark")
                                         .font(.system(size: 11, weight: .semibold))
-                                    Text(savedTurnIDs.contains(t.id) ? "Saved" : "Save phrase")
+                                    Text(savedTurnIDs.contains(t.id) ? "Guardada" : "Guardar frase")
                                         .font(.jakarta(12, .semibold))
                                 }
                                 .foregroundStyle(Theme.accent)
@@ -240,8 +240,8 @@ struct SummaryScreen: View {
 
                 if let s = router.latest {
                     HStack(spacing: 12) {
-                        statCard("\(s.wordCount ?? s.durationS / 3)", "words spoken", valueColor: Theme.ink)
-                        statCard("\(s.correctionCount ?? 0)", "corrections", valueColor: Theme.accent)
+                        statCard("\(s.wordCount ?? s.durationS / 3)", "palabras dichas", valueColor: Theme.ink)
+                        statCard("\(s.correctionCount ?? 0)", "correcciones", valueColor: Theme.accent)
                     }
                     .padding(.top, 28)
                 }
@@ -249,12 +249,12 @@ struct SummaryScreen: View {
                 Spacer()
 
                 if router.latest != nil {
-                    YellowPillButton(title: "See transcript") {
+                    YellowPillButton(title: "Ver transcripción") {
                         router.selectedSessionID = router.latest?.id
                         router.go(.session)
                     }
                 }
-                GhostButton(title: "Back home") { router.go(.home) }
+                GhostButton(title: "Volver al inicio") { router.go(.home) }
                     .padding(.top, 12)
             }
             .padding(.horizontal, 26)
@@ -267,13 +267,13 @@ struct SummaryScreen: View {
     }
 
     private var headline: String {
-        (router.latest?.durationS ?? 0) >= 30 ? "Nice work." : "That was a short one."
+        (router.latest?.durationS ?? 0) >= 30 ? "¡Buen trabajo!" : "Esa fue corta."
     }
 
     private var sub: String {
-        guard let s = router.latest else { return "Loading your session…" }
+        guard let s = router.latest else { return "Cargando tu sesión…" }
         let m = s.durationS / 60
-        return m > 0 ? "You spoke \(m) minute\(m == 1 ? "" : "s") today." : "You spoke \(s.durationS) seconds."
+        return m > 0 ? "Hoy hablaste \(m) minuto\(m == 1 ? "" : "s")." : "Hablaste \(s.durationS) segundos."
     }
 
     private func statCard(_ value: String, _ label: String, valueColor: Color) -> some View {
@@ -300,9 +300,9 @@ struct PaywallScreen: View {
     @State private var errorMsg: String? = nil
 
     private let perks = [
-        "30 minutes a day",
-        "Live transcript & saved history",
-        "Gentle corrections after each chat",
+        "30 minutos de práctica al día",
+        "Transcripción en vivo e historial guardado",
+        "Correcciones suaves después de cada charla",
     ]
 
     var body: some View {
@@ -312,18 +312,18 @@ struct PaywallScreen: View {
             VStack(spacing: 0) {
                 Spacer()
 
-                Text("THAT'S TODAY'S 3 MINUTES")
+                Text("ESOS FUERON TUS 3 MINUTOS DE HOY")
                     .font(.jakarta(12, .bold))
                     .tracking(0.7)
                     .foregroundStyle(Theme.accent)
                     .padding(.bottom, 14)
 
-                Text("You're all in for today.")
+                Text("Diste todo por hoy.")
                     .font(.jakarta(30, .heavy))
                     .tracking(-0.7)
                     .foregroundStyle(Theme.ink)
 
-                Text("Echo will be here tomorrow at midnight — or unlock more right now.")
+                Text("Echo vuelve a medianoche — o desbloquea más ahora mismo.")
                     .font(.jakarta(16))
                     .multilineTextAlignment(.center)
                     .foregroundStyle(Theme.textMuted)
@@ -372,10 +372,10 @@ struct PaywallScreen: View {
 
                 Spacer()
 
-                YellowPillButton(title: loading ? "Opening checkout…" : "Unlock Premium") {
+                YellowPillButton(title: loading ? "Abriendo el pago…" : "Desbloquear Premium") {
                     upgrade()
                 }
-                GhostButton(title: "See you tomorrow") { router.go(.home) }
+                GhostButton(title: "Nos vemos mañana") { router.go(.home) }
                     .padding(.top, 12)
             }
             .padding(.horizontal, 26)
@@ -392,7 +392,7 @@ struct PaywallScreen: View {
                 let url = try await router.api.checkoutURL()
                 await UIApplication.shared.open(url)
             } catch {
-                errorMsg = "Couldn't reach checkout. Try again in a moment."
+                errorMsg = "No pudimos abrir el pago. Inténtalo en un momento."
             }
             loading = false
         }

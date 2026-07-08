@@ -30,7 +30,7 @@ export default function TranscriptPage() {
         setSession(s);
         setTurns(t);
       })
-      .catch(() => setError("Couldn't load this conversation."));
+      .catch(() => setError("No pudimos cargar esta conversación."));
   }, [isLoaded, isSignedIn, getToken, id]);
 
   async function handleSave(turn: Turn) {
@@ -38,8 +38,8 @@ export default function TranscriptPage() {
     try {
       await savePhrase(getToken, {
         phrase: turn.correction.to,
-        note: `Instead of “${turn.correction.from}”.`,
-        tag: "Correction",
+        note: `En lugar de “${turn.correction.from}”.`,
+        tag: "Corrección",
         session_id: id,
       });
       setSavedIds((prev) => new Set(prev).add(turn.id));
@@ -56,7 +56,7 @@ export default function TranscriptPage() {
           <Link
             href="/history"
             className="w-10 h-10 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] flex items-center justify-center flex-none text-[var(--color-text-muted)] hover:border-[var(--color-accent)] transition-colors"
-            aria-label="Back to history"
+            aria-label="Volver al historial"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 5l-7 7 7 7" />
@@ -64,10 +64,10 @@ export default function TranscriptPage() {
           </Link>
           <div className="min-w-0">
             <div className="text-[13px] font-bold tracking-[0.05em] uppercase text-[var(--color-accent)]">
-              Transcript
+              Transcripción
             </div>
             <h1 className="font-display text-[clamp(22px,3vw,30px)] tracking-[-0.02em] truncate">
-              {session?.title ?? "Conversation"}
+              {session?.title ?? "Conversación"}
             </h1>
           </div>
         </div>
@@ -77,11 +77,11 @@ export default function TranscriptPage() {
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-[var(--color-text-muted)] pt-4 pb-[18px] border-b border-[var(--color-border-soft)] mb-6">
             <span>{formatDate(session.started_at)}</span>
             <span>· {formatDuration(session.duration_s)}</span>
-            {session.word_count != null && <span>· {session.word_count} words</span>}
+            {session.word_count != null && <span>· {session.word_count} palabras</span>}
             {(session.correction_count ?? 0) > 0 && (
               <span className="text-[var(--color-accent)] font-semibold">
-                · {session.correction_count} correction
-                {session.correction_count === 1 ? "" : "s"}
+                · {session.correction_count} correccion
+                {session.correction_count === 1 ? "" : "es"}
               </span>
             )}
           </div>
@@ -104,7 +104,7 @@ export default function TranscriptPage() {
 
         {turns && turns.length === 0 && (
           <p className="text-[14px] text-[var(--color-text-muted)] py-6">
-            No transcript was recorded for this conversation.
+            No se grabó transcripción para esta conversación.
           </p>
         )}
 
@@ -154,7 +154,7 @@ function UserTurn({
           <div className="w-full bg-[var(--color-accent-soft)] border border-[#DBDBBE] rounded-2xl px-4 py-[13px] flex flex-col gap-1.5">
             <div className="flex items-center justify-between gap-3">
               <span className="text-[11px] font-bold tracking-[0.05em] uppercase text-[var(--color-accent)]">
-                Gentle correction
+                Corrección suave
               </span>
               <button
                 type="button"
@@ -165,7 +165,7 @@ function UserTurn({
                 <svg width="13" height="13" viewBox="0 0 24 24" fill={saved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z" />
                 </svg>
-                {saved ? "Saved" : "Save phrase"}
+                {saved ? "Guardada" : "Guardar frase"}
               </button>
             </div>
             <div className="text-[15px] leading-[1.5] text-left">

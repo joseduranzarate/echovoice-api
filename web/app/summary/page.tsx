@@ -34,10 +34,10 @@ function SummaryInner() {
   const seconds = session?.duration_s ?? clientSeconds;
   const billable = seconds >= 30;
 
-  const headline = billable ? "Nice work." : "That was a short one.";
+  const headline = billable ? "¡Buen trabajo!" : "Esa fue corta.";
   const sub = billable
-    ? `You spoke for ${formatDuration(seconds)}.`
-    : "Sessions under 30 seconds don't count against your daily minutes — try again whenever.";
+    ? `Hablaste durante ${formatDuration(seconds)}.`
+    : "Las sesiones de menos de 30 segundos no cuentan para tus minutos diarios — inténtalo cuando quieras.";
 
   return (
     <AppShell>
@@ -59,16 +59,16 @@ function SummaryInner() {
 
         {billable && (
           <div className="grid grid-cols-2 gap-3 mt-8">
-            <Stat label="Duration" value={formatDuration(seconds)} />
+            <Stat label="Duración" value={formatDuration(seconds)} />
             {session?.word_count != null ? (
-              <Stat label="Words spoken" value={String(session.word_count)} accent />
+              <Stat label="Palabras dichas" value={String(session.word_count)} accent />
             ) : (
-              <Stat label="Minutes" value={(seconds / 60).toFixed(1)} />
+              <Stat label="Minutos" value={(seconds / 60).toFixed(1)} />
             )}
             {(session?.correction_count ?? 0) > 0 && (
               <div className="col-span-2">
                 <Stat
-                  label="Gentle corrections"
+                  label="Correcciones suaves"
                   value={String(session!.correction_count)}
                   accent
                 />
@@ -84,7 +84,7 @@ function SummaryInner() {
               className="h-14 rounded-full bg-[var(--color-btn)] text-[var(--color-btn-text)] flex items-center justify-center text-[16px] font-bold hover:-translate-y-[2px] active:translate-y-0 transition-transform"
               style={{ boxShadow: "var(--shadow-pill)" }}
             >
-              See transcript
+              Ver transcripción
             </Link>
           )}
           <Link
@@ -96,13 +96,13 @@ function SummaryInner() {
             }
             style={session && billable ? undefined : { boxShadow: "var(--shadow-pill)" }}
           >
-            Talk again
+            Hablar de nuevo
           </Link>
           <Link
             href="/"
             className="text-center text-[14px] text-[var(--color-text-soft)] hover:text-[var(--color-ink)] transition-colors"
           >
-            Back home
+            Volver al inicio
           </Link>
         </div>
       </div>

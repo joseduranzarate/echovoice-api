@@ -16,7 +16,7 @@ export default function HistoryPage() {
     if (!isLoaded || !isSignedIn) return;
     listSessions(getToken)
       .then(setSessions)
-      .catch((e) => setError(e instanceof Error ? e.message : "Couldn't load history"));
+      .catch((e) => setError(e instanceof Error ? e.message : "No pudimos cargar el historial"));
   }, [isLoaded, isSignedIn, getToken]);
 
   const stats = useMemo(() => {
@@ -47,15 +47,15 @@ export default function HistoryPage() {
   return (
     <AppShell>
       <div className="max-w-[1040px] mx-auto px-[clamp(22px,4vw,56px)] pt-[clamp(30px,5vw,64px)] pb-20">
-        <h1 className="font-display text-[clamp(28px,3.5vw,40px)]">History</h1>
+        <h1 className="font-display text-[clamp(28px,3.5vw,40px)]">Historial</h1>
 
         {/* Stats */}
         <div className="flex gap-3.5 flex-wrap mt-[22px]">
-          <Stat value={stats ? String(stats.thisWeek) : "—"} label="this week" />
-          <Stat value={stats ? String(stats.weekMinutes) : "—"} label="minutes" />
+          <Stat value={stats ? String(stats.thisWeek) : "—"} label="esta semana" />
+          <Stat value={stats ? String(stats.weekMinutes) : "—"} label="minutos" />
           <Stat
             value={stats ? String(stats.total) : "—"}
-            label="conversations"
+            label="conversaciones"
             accent
           />
         </div>
@@ -70,13 +70,13 @@ export default function HistoryPage() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search your conversations…"
+            placeholder="Busca tus conversaciones…"
             className="flex-1 bg-transparent border-none outline-none text-[15px] text-[var(--color-ink)] placeholder:text-[var(--color-text-faint)]"
           />
         </label>
 
         <div className="text-[13px] font-bold text-[var(--color-text-soft)] mt-[34px] mb-3.5">
-          Recent conversations
+          Conversaciones recientes
         </div>
 
         {error && <p className="text-[14px] text-[#C0563E]">{error}</p>}
@@ -95,8 +95,8 @@ export default function HistoryPage() {
         {filtered && filtered.length === 0 && (
           <p className="text-[14px] text-[var(--color-text-muted)] py-4">
             {sessions && sessions.length > 0
-              ? "No conversations match your search."
-              : "Your conversations will show up here once you start talking."}
+              ? "Ninguna conversación coincide con tu búsqueda."
+              : "Tus conversaciones aparecerán aquí cuando empieces a hablar."}
           </p>
         )}
 
@@ -158,7 +158,7 @@ function SessionCard({ s }: { s: SessionSummary }) {
           {formatDate(s.started_at)} · {formatDuration(s.duration_s)}
           {(s.correction_count ?? 0) > 0 && (
             <span className="text-[var(--color-accent)]">
-              {" "}· {s.correction_count} correction{s.correction_count === 1 ? "" : "s"}
+              {" "}· {s.correction_count} correccion{s.correction_count === 1 ? "" : "es"}
             </span>
           )}
         </div>
@@ -180,12 +180,12 @@ function formatRelative(iso: string): string {
   const d = new Date(iso);
   const diffMs = Date.now() - d.getTime();
   const mins = Math.floor(diffMs / 60_000);
-  if (mins < 1) return "Just now";
-  if (mins < 60) return `${mins} min ago`;
+  if (mins < 1) return "Justo ahora";
+  if (mins < 60) return `hace ${mins} min`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs} hr ago`;
+  if (hrs < 24) return `hace ${hrs} h`;
   const days = Math.floor(hrs / 24);
-  if (days < 7) return `${days} day${days === 1 ? "" : "s"} ago`;
+  if (days < 7) return `hace ${days} día${days === 1 ? "" : "s"}`;
   return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 }
 

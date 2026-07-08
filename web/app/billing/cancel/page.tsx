@@ -11,10 +11,10 @@ export default function BillingCancelPage() {
 
         <div className="flex flex-col gap-2">
           <h1 className="font-display font-bold text-[clamp(24px,4.5vw,32px)]">
-            No worries.
+            No pasa nada.
           </h1>
           <p className="text-[14px] text-[var(--color-text-muted)] max-w-[320px]">
-            You weren&apos;t charged. Premium will be here when you&apos;re ready.
+            No se te cobró. Premium estará aquí cuando estés listo.
           </p>
         </div>
 
@@ -24,13 +24,13 @@ export default function BillingCancelPage() {
             className="h-[52px] rounded-full bg-[var(--color-btn)] text-[var(--color-btn-text)] text-[14px] font-bold flex items-center justify-center hover:-translate-y-[2px] active:translate-y-0 transition-transform"
             style={{ boxShadow: "var(--shadow-pill)" }}
           >
-            Back to talking
+            Volver a hablar
           </Link>
           <Link
             href="/"
             className="text-[14px] text-[var(--color-text-soft)] hover:text-[var(--color-ink)] transition-colors"
           >
-            Back home
+            Volver al inicio
           </Link>
         </div>
       </div>

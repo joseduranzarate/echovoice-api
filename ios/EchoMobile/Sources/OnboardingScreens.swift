@@ -61,7 +61,7 @@ struct SplashScreen: View {
                         .font(.jakarta(34, .heavy))
                         .tracking(-0.5)
                         .foregroundStyle(Theme.ink)
-                    Text("Warming up your voice…")
+                    Text("Calentando tu voz…")
                         .font(.jakarta(14))
                         .foregroundStyle(Theme.sub)
                 }
@@ -125,20 +125,20 @@ struct WelcomeScreen: View {
                 OrbView(size: 170, halo: true)
                     .padding(.bottom, 34)
 
-                Text("VOICE-FIRST PRACTICE")
+                Text("PRÁCTICA DE VOZ PRIMERO")
                     .font(.jakarta(12, .bold))
                     .tracking(1)
                     .foregroundStyle(Theme.accent)
                     .padding(.bottom, 16)
 
-                Text("Finally,\nsomewhere\nto speak.")
+                Text("Por fin,\nun lugar\npara hablar.")
                     .font(.jakarta(38, .heavy))
                     .tracking(-1)
                     .multilineTextAlignment(.center)
                     .lineSpacing(0)
                     .foregroundStyle(Theme.ink)
 
-                Text("Practice speaking English with a patient AI partner. Free, three minutes a day.")
+                Text("Practica tu inglés hablado con un compañero de IA paciente. Gratis, tres minutos al día.")
                     .font(.jakarta(16))
                     .lineSpacing(4)
                     .multilineTextAlignment(.center)
@@ -149,8 +149,8 @@ struct WelcomeScreen: View {
                 Spacer()
 
                 VStack(spacing: 14) {
-                    YellowPillButton(title: "Start talking") { router.go(.auth) }
-                    Text("No appointment · No judgment · Available at 2am")
+                    YellowPillButton(title: "Empieza a hablar") { router.go(.auth) }
+                    Text("Sin citas · Sin juicios · Disponible a las 2am")
                         .font(.jakarta(13))
                         .foregroundStyle(Theme.sub)
                 }
@@ -182,7 +182,7 @@ struct AuthScreen: View {
                 }
             } catch {
                 loading = nil
-                errorMsg = "Sign-in didn't complete — try again."
+                errorMsg = "No se completó el inicio de sesión — inténtalo de nuevo."
             }
         }
     }
@@ -197,12 +197,12 @@ struct AuthScreen: View {
                 OrbView(size: 62)
                     .padding(.bottom, 28)
 
-                Text("Let's get you talking.")
+                Text("Empecemos a hablar.")
                     .font(.jakarta(30, .heavy))
                     .tracking(-0.7)
                     .foregroundStyle(Theme.ink)
 
-                Text("One tap to sign in. No forms, no passwords.")
+                Text("Inicia sesión con un toque. Sin formularios, sin contraseñas.")
                     .font(.jakarta(15))
                     .foregroundStyle(Theme.textMuted)
                     .frame(maxWidth: 280)
@@ -217,7 +217,7 @@ struct AuthScreen: View {
                             .font(.jakarta(13))
                             .foregroundStyle(Theme.danger)
                     }
-                    ssoButton(label: loading == "Google" ? "Opening Google…" : "Continue with Google") {
+                    ssoButton(label: loading == "Google" ? "Abriendo Google…" : "Continuar con Google") {
                         sso(.google, label: "Google")
                     } icon: {
                         AnyView(
@@ -231,14 +231,14 @@ struct AuthScreen: View {
                                 .frame(width: 22, height: 22)
                         )
                     }
-                    ssoButton(label: loading == "Apple" ? "Opening Apple…" : "Continue with Apple") {
+                    ssoButton(label: loading == "Apple" ? "Abriendo Apple…" : "Continuar con Apple") {
                         sso(.apple, label: "Apple")
                     } icon: {
                         AnyView(
                             Circle().fill(Theme.inkDark).frame(width: 22, height: 22)
                         )
                     }
-                    GhostButton(title: "Not now") { router.go(.welcome) }
+                    GhostButton(title: "Ahora no") { router.go(.welcome) }
                         .padding(.top, 6)
                 }
             }
@@ -303,9 +303,9 @@ struct SetupScreen: View {
 
                 if step == 0 {
                     question(
-                        kicker: "QUESTION 1 OF 2",
-                        title: "What's your current level?",
-                        sub: "Just helps Echo pace the conversation.",
+                        kicker: "PREGUNTA 1 DE 2",
+                        title: "¿Cuál es tu nivel actual?",
+                        sub: "Solo ayuda a Echo a marcar el ritmo.",
                         options: DemoData.levels,
                         selected: level
                     ) { pick in
@@ -314,9 +314,9 @@ struct SetupScreen: View {
                     }
                 } else {
                     question(
-                        kicker: "QUESTION 2 OF 2",
-                        title: "What would you like to practice?",
-                        sub: "Echo will follow your lead either way.",
+                        kicker: "PREGUNTA 2 DE 2",
+                        title: "¿Qué quieres practicar?",
+                        sub: "Echo seguirá tu ritmo de todas formas.",
                         options: DemoData.topics,
                         selected: topic
                     ) { pick in
@@ -327,11 +327,10 @@ struct SetupScreen: View {
                 Spacer()
 
                 if topic != nil {
-                    YellowPillButton(title: "Enter Echo") {
+                    YellowPillButton(title: "Entrar a Echo") {
                         // Persist server-side — the agent paces by level.
-                        let l = level?.lowercased()
-                        let t = topic?.lowercased()
-                        Task { try? await router.api.updatePreferences(level: l, topic: t) }
+                        // level/topic hold English ids (Option.value).
+                        Task { try? await router.api.updatePreferences(level: level, topic: topic) }
                         router.go(.home)
                     }
                     .transition(.opacity.combined(with: .move(edge: .bottom)))
@@ -351,7 +350,7 @@ struct SetupScreen: View {
 
     private func question(
         kicker: String, title: String, sub: String,
-        options: [String], selected: String?,
+        options: [DemoData.Option], selected: String?,
         onPick: @escaping (String) -> Void
     ) -> some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -371,8 +370,10 @@ struct SetupScreen: View {
                 .padding(.bottom, 26)
 
             VStack(spacing: 11) {
-                ForEach(options, id: \.self) { opt in
-                    choiceCard(label: opt, selected: selected == opt) { onPick(opt) }
+                ForEach(options) { opt in
+                    choiceCard(label: opt.label, selected: selected == opt.value) {
+                        onPick(opt.value)
+                    }
                 }
             }
         }
