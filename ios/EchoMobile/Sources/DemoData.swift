@@ -4,6 +4,17 @@ import Foundation
 enum DemoData {
     static let prompts = ["Order at a café", "Talk about my weekend", "Job interview", "Describe my city", "Small talk"]
 
+    struct Exam: Identifiable {
+        let id = UUID()
+        let label: String
+        let value: String
+    }
+
+    static let exams: [Exam] = [
+        .init(label: "IELTS Speaking", value: "exam:ielts-speaking"),
+        .init(label: "TOEFL Speaking", value: "exam:toefl-speaking"),
+    ]
+
     struct Scenario: Identifiable {
         let id = UUID()
         let emoji: String

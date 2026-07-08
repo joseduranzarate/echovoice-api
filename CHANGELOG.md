@@ -1108,6 +1108,25 @@ and API URL (copy from `web/.env.local`); until then the app shows an
 "Almost there" instruction screen instead of crashing. Builds clean in
 the simulator; on-device sign-in/audio testing pending those keys.
 
+### 2026-07-08 — Exam mode Level 1 (IELTS / TOEFL Speaking chips)
+
+From the new Home design analysis: exam chips as structured scenarios,
+no endpoint changes (they ride the existing scenario pipe).
+
+- **Agent**: `EXAM_PROMPTS` keyed by marker — `exam:ielts-speaking`
+  runs a 3-part mock (intro questions → cue-card long turn → discussion),
+  `exam:toefl-speaking` runs independent + situation tasks with a tip
+  after each. Both explicitly do NOT give scores (that's exam Level 2,
+  post-pricing). Level pacing still applies underneath.
+- **Web**: two EXAM chips on Home (accent-tinted, graduation icon,
+  EXAM badge); /talk badge shows "Mock exam: IELTS Speaking" instead of
+  the raw marker.
+- **iOS**: same chips + badge formatting.
+
+Rest of the Home redesign analysis (free-text situation input, resume
+card, /me/stats) parked as next items; resume-with-memory needs
+`resume_session_id` through /token → dispatch → agent context.
+
 ### Technical debt
 
 - **Consolidate Railway services into one project** (2026-07-05): API and

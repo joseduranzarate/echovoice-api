@@ -14,6 +14,13 @@ const PROMPTS = [
   "Small talk",
 ];
 
+// Exam chips send a marker; the agent maps it to a structured mock-exam
+// prompt (see EXAM_PROMPTS in agent/bot.py).
+const EXAMS = [
+  { label: "IELTS Speaking", value: "exam:ielts-speaking" },
+  { label: "TOEFL Speaking", value: "exam:toefl-speaking" },
+];
+
 const SCENARIOS = [
   { emoji: "☕", title: "Everyday talk", desc: "Cafes, shops, small daily moments.", bg: "#E9ECD6" },
   { emoji: "💼", title: "Work & interviews", desc: "Meetings, intros, tricky questions.", bg: "#EFE7CB" },
@@ -118,6 +125,21 @@ export function HomeDashboard() {
             className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-full px-[19px] py-[11px] text-[14px] font-semibold text-[#3C3E2E] whitespace-nowrap hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-colors"
           >
             {label}
+          </Link>
+        ))}
+        {EXAMS.map((e) => (
+          <Link
+            key={e.value}
+            href={`/talk?scenario=${encodeURIComponent(e.value)}`}
+            className="flex items-center gap-2 bg-[var(--color-accent-soft)] border border-[var(--color-accent)] rounded-full px-[19px] py-[11px] text-[14px] font-semibold text-[var(--color-accent-deep)] whitespace-nowrap hover:bg-[var(--color-accent)] hover:text-white transition-colors"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 10L12 5 2 10l10 5 10-5zM6 12v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5" />
+            </svg>
+            {e.label}
+            <span className="text-[10px] font-bold tracking-[0.05em] px-1.5 py-0.5 rounded bg-[var(--color-accent)] text-white group-hover:bg-white">
+              EXAM
+            </span>
           </Link>
         ))}
       </div>

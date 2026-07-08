@@ -51,6 +51,38 @@ struct HomeScreen: View {
                     }
                     .padding(.top, 22)
 
+                    // Exam chips → structured mock-exam prompts
+                    HStack(spacing: 9) {
+                        ForEach(DemoData.exams) { e in
+                            Button {
+                                router.startTalk(scenario: e.value)
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "graduationcap")
+                                        .font(.system(size: 12, weight: .semibold))
+                                    Text(e.label)
+                                        .font(.jakarta(14, .semibold))
+                                    Text("EXAM")
+                                        .font(.jakarta(10, .bold))
+                                        .tracking(0.5)
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 5)
+                                        .padding(.vertical, 2)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 4).fill(Theme.accent)
+                                        )
+                                }
+                                .foregroundStyle(Theme.accentDeep)
+                                .padding(.horizontal, 15)
+                                .padding(.vertical, 11)
+                                .background(Capsule().fill(Theme.accentSoft))
+                                .overlay(Capsule().stroke(Theme.accent, lineWidth: 1))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.top, 9)
+
                     // Talk hero — free talk, no scenario
                     Button {
                         router.startTalk()

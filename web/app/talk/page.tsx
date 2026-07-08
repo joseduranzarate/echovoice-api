@@ -273,11 +273,11 @@ function TalkInner() {
           )}
         </div>
 
-        {/* Scenario badge — this call is a roleplay */}
+        {/* Scenario badge — this call is a roleplay or mock exam */}
         {scenario && (
           <div className="absolute top-[64px] left-0 right-0 flex justify-center">
             <span className="px-4 py-1.5 rounded-full bg-[var(--color-accent-soft)] border border-[var(--color-accent)] text-[var(--color-accent)] text-[13px] font-semibold">
-              Practicing: {scenario}
+              {formatScenario(scenario)}
             </span>
           </div>
         )}
@@ -398,6 +398,12 @@ function TalkInner() {
       </div>
     </AppShell>
   );
+}
+
+function formatScenario(s: string): string {
+  if (s === "exam:ielts-speaking") return "Mock exam: IELTS Speaking";
+  if (s === "exam:toefl-speaking") return "Mock exam: TOEFL Speaking";
+  return `Practicing: ${s}`;
 }
 
 function formatTime(s: number): string {

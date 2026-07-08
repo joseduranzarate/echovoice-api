@@ -38,7 +38,7 @@ struct ConversationScreen: View {
 
                 // Scenario badge
                 if let scenario = router.pendingScenario {
-                    Text("Practicing: \(scenario)")
+                    Text(formatScenario(scenario))
                         .font(.jakarta(12, .semibold))
                         .foregroundStyle(Theme.accent)
                         .padding(.horizontal, 14)
@@ -323,4 +323,12 @@ struct LiveTranscriptScreen: View {
 
 func fmtClock(_ s: Int) -> String {
     "\(s / 60):" + String(format: "%02d", s % 60)
+}
+
+func formatScenario(_ s: String) -> String {
+    switch s {
+    case "exam:ielts-speaking": return "Mock exam: IELTS Speaking"
+    case "exam:toefl-speaking": return "Mock exam: TOEFL Speaking"
+    default: return "Practicing: \(s)"
+    }
 }
