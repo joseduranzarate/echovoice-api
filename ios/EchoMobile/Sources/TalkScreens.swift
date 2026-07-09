@@ -36,9 +36,9 @@ struct ConversationScreen: View {
                 .padding(.horizontal, 22)
                 .padding(.top, 8)
 
-                // Scenario badge
-                if let scenario = router.pendingScenario {
-                    Text(formatScenario(scenario))
+                // Scenario / resume badge
+                if let badge = badgeLabel {
+                    Text(badge)
                         .font(.jakarta(12, .semibold))
                         .foregroundStyle(Theme.accent)
                         .padding(.horizontal, 14)
@@ -118,15 +118,30 @@ struct ConversationScreen: View {
         }
     }
 
+    private var badgeLabel: String? {
+        if let scenario = router.pendingScenario { return formatScenario(scenario) }
+        if let resume = router.pendingResume {
+            return "Continuando: \(resume.title ?? "tu última conversación")"
+        }
+        return nil
+    }
+
     private func startIfIdle() {
         guard call.phase == .idle || call.isError else { return }
-        Task { await call.start(api: router.api, scenario: router.pendingScenario) }
+        Task {
+            await call.start(
+                api: router.api,
+                scenario: router.pendingScenario,
+                resumeSessionId: router.pendingResume?.id
+            )
+        }
     }
 
     private func finishCall() {
         Task {
             _ = await call.end()
             router.pendingScenario = nil
+            router.pendingResume = nil
             router.refreshLatest()
             router.go(.summary)
         }

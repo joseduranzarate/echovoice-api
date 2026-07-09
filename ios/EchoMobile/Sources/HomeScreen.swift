@@ -115,6 +115,25 @@ struct HomeScreen: View {
                     .buttonStyle(.plain)
                     .padding(.top, 24)
 
+                    // Your activity — resume the last conversation with memory
+                    if let last = router.latest {
+                        HStack {
+                            Text("Tu actividad")
+                                .font(.jakarta(18, .bold))
+                                .tracking(-0.2)
+                                .foregroundStyle(Theme.ink)
+                            Spacer()
+                            Button("Historial") { router.go(.history) }
+                                .font(.jakarta(14, .semibold))
+                                .foregroundStyle(Theme.accent)
+                                .buttonStyle(.plain)
+                        }
+                        .padding(.top, 30)
+                        .padding(.bottom, 14)
+
+                        resumeCard(last)
+                    }
+
                     // Scenarios
                     HStack {
                         Text("Escenarios de práctica")
@@ -141,6 +160,67 @@ struct HomeScreen: View {
                 .padding(.bottom, 118)
             }
         }
+    }
+
+    private func resumeCard(_ s: SessionSummary) -> some View {
+        Button {
+            router.startTalk(resume: s)
+        } label: {
+            HStack(spacing: 14) {
+                OrbView(size: 52)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("RETOMA DONDE LO DEJASTE")
+                        .font(.jakarta(10, .bold))
+                        .tracking(0.9)
+                        .foregroundStyle(.white.opacity(0.5))
+                    Text(s.title ?? "Tu última conversación")
+                        .font(.jakarta(17, .bold))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                    Text(resumeMeta(s))
+                        .font(.jakarta(13))
+                        .foregroundStyle(.white.opacity(0.55))
+                }
+                Spacer()
+                Image(systemName: "play.fill")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(Theme.btnText)
+                    .frame(width: 44, height: 44)
+                    .background(Circle().fill(Theme.btnBg))
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(Theme.inkDark)
+            )
+            .shadow(color: Theme.inkDark.opacity(0.6), radius: 18, y: 12)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func resumeMeta(_ s: SessionSummary) -> String {
+        var parts: [String] = []
+        let iso = ISO8601DateFormatter()
+        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = iso.date(from: s.startedAt)
+            ?? ISO8601DateFormatter().date(from: s.startedAt) {
+            if Calendar.current.isDateInToday(date) {
+                parts.append("Hoy")
+            } else if Calendar.current.isDateInYesterday(date) {
+                parts.append("Ayer")
+            } else {
+                let f = DateFormatter()
+                f.locale = Locale(identifier: "es")
+                f.dateFormat = "d MMM"
+                parts.append(f.string(from: date))
+            }
+        }
+        parts.append("\(max(1, s.durationS / 60)) min")
+        if let c = s.correctionCount, c > 0 {
+            parts.append("\(c) correcci\(c == 1 ? "ón" : "ones")")
+        }
+        return parts.joined(separator: " · ")
     }
 
     private func scenarioCard(_ s: DemoData.Scenario) -> some View {

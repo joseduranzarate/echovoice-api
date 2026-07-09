@@ -33,13 +33,13 @@ final class CallController: ObservableObject {
     private var ticker: Task<Void, Never>?
     private var startedAt: Date?
 
-    func start(api: EchoAPI, scenario: String?) async {
+    func start(api: EchoAPI, scenario: String?, resumeSessionId: String? = nil) async {
         guard phase == .idle || isError else { return }
         reset()
         phase = .connecting
 
         do {
-            let t = try await api.mintToken(scenario: scenario)
+            let t = try await api.mintToken(scenario: scenario, resumeSessionId: resumeSessionId)
             room.add(delegate: self)
             try await room.connect(url: t.url, token: t.token)
             try await room.localParticipant.setMicrophone(enabled: true)

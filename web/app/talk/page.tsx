@@ -30,7 +30,10 @@ function TalkInner() {
   const router = useRouter();
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const { user } = useUser();
-  const scenario = useSearchParams().get("scenario") || undefined;
+  const searchParams = useSearchParams();
+  const scenario = searchParams.get("scenario") || undefined;
+  const resumeId = searchParams.get("resume") || undefined;
+  const resumeTitle = searchParams.get("resumeTitle") || undefined;
 
   const [phase, setPhase] = useState<Phase>("idle");
   const [orbState, setOrbState] = useState<OrbState>("idle");
@@ -109,7 +112,7 @@ function TalkInner() {
     setOrbState("connecting");
 
     try {
-      const t = await mintToken(getToken, scenario);
+      const t = await mintToken(getToken, scenario, resumeId);
       setQuota(t.quota);
 
       const room = new Room({
@@ -273,11 +276,13 @@ function TalkInner() {
           )}
         </div>
 
-        {/* Scenario badge — this call is a roleplay or mock exam */}
-        {scenario && (
+        {/* Scenario / resume badge — roleplay, mock exam, or a continued call */}
+        {(scenario || resumeId) && (
           <div className="absolute top-[64px] left-0 right-0 flex justify-center">
             <span className="px-4 py-1.5 rounded-full bg-[var(--color-accent-soft)] border border-[var(--color-accent)] text-[var(--color-accent)] text-[13px] font-semibold">
-              {formatScenario(scenario)}
+              {scenario
+                ? formatScenario(scenario)
+                : `Continuando: ${resumeTitle || "tu última conversación"}`}
             </span>
           </div>
         )}

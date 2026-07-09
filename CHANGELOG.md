@@ -1163,6 +1163,39 @@ Copy highlights: "Por fin, un lugar para hablar." / "¿Hablamos?" /
 "Habla con Echo" / "Despertando a Echo…" / "Corrección suave" /
 "Frases guardadas" / "Diste todo por hoy." / exam badge "EXAMEN".
 
+### 2026-07-09 — Resume-with-memory ("Retoma donde lo dejaste")
+
+The Home resume card from the new design is now real: one tap continues
+the last conversation and **Echo actually remembers it** — the previous
+turns are seeded into the LLM context, not just summarized.
+
+Flow:
+
+```
+Home card ──► /talk?resume={session_id}
+                │
+                ▼
+POST /token {resume_session_id}
+  ├─ get_session()      ownership check (404-safe: silently ignored if not yours)
+  ├─ get_transcript()   last 12 turns, 400 chars each
+  └─ dispatch payload   + resume: {title, turns}
+                │
+                ▼
+agent handle_dispatch  re-sanitizes shape (secret ≠ trusted payload)
+run_session            LLMContext = [system, …previous turns]
+build_system_prompt    "welcome them back, recall the topic, continue —
+                        don't re-introduce yourself"
+```
+
+- New session row as always — History stays honest; the memory link is
+  only in the LLM context, no schema change
+- Web: `Tu actividad` section on Home (dark card, orb, title, "Hoy ·
+  6 min · 3 correcciones", yellow play) → uses existing GET
+  /sessions/latest; talk page shows badge "Continuando: {título}"
+- iOS: same card on HomeScreen (`router.latest`, refreshed on .home),
+  `pendingResume` handoff, `mintToken(resumeSessionId:)`, same badge
+- Caps keep the dispatch payload and prompt small: 12 turns × 400 chars
+
 ### Technical debt
 
 - **Consolidate Railway services into one project** (2026-07-05): API and

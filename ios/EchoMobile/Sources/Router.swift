@@ -34,6 +34,7 @@ final class Router: ObservableObject {
     // Cross-screen handoff
     @Published var selectedSessionID: String?
     @Published var pendingScenario: String?
+    @Published var pendingResume: SessionSummary?
 
     var signedIn: Bool { Clerk.shared.user != nil }
     var userName: String { Clerk.shared.user?.firstName ?? "tú" }
@@ -43,7 +44,7 @@ final class Router: ObservableObject {
     func go(_ s: Screen) {
         screen = s
         switch s {
-        case .home: refreshQuota()
+        case .home: refreshQuota(); refreshLatest()
         case .history: refreshSessions()
         case .saved: refreshPhrases()
         case .profile: refreshQuota()
@@ -56,8 +57,9 @@ final class Router: ObservableObject {
         go(signedIn ? .home : .welcome)
     }
 
-    func startTalk(scenario: String? = nil) {
+    func startTalk(scenario: String? = nil, resume: SessionSummary? = nil) {
         pendingScenario = scenario
+        pendingResume = resume
         go(.conversation)
     }
 

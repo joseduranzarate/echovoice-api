@@ -75,6 +75,9 @@ class TokenBody(BaseModel):
     # Optional roleplay scenario the user picked on Home; injected into the
     # agent's system prompt for this call only.
     scenario: Optional[str] = None
+    # Optional session to continue — the API forwards the tail of that
+    # transcript so Echo remembers the previous conversation.
+    resume_session_id: Optional[str] = None
 
 
 @app.post("/token")
@@ -104,6 +107,22 @@ def mint_token(
 
     scenario = (body.scenario or "").strip()[:200] if body else ""
 
+    # Resume memory: ownership-checked; last 12 turns keep the dispatch
+    # payload (and the agent's LLM context) small.
+    resume = None
+    if body and body.resume_session_id:
+        prev = get_session(user_id, body.resume_session_id.strip())
+        if prev:
+            turns = get_transcript(user_id, prev["id"]) or []
+            if turns:
+                resume = {
+                    "title": prev.get("title"),
+                    "turns": [
+                        {"role": t["role"], "text": t["text"][:400]}
+                        for t in turns[-12:]
+                    ],
+                }
+
     # Learner level (from onboarding preferences) rides along so the agent
     # can pace the conversation.
     try:
@@ -121,6 +140,7 @@ def mint_token(
                 "user_id": user_id,
                 "scenario": scenario or None,
                 "level": level,
+                "resume": resume,
             },
             headers={"X-Dispatch-Secret": DISPATCH_SECRET},
             timeout=5.0,

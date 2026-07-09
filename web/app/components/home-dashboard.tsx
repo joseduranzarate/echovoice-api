@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
-import { getQuota, type Quota } from "../lib/api";
+import {
+  getQuota,
+  latestSession,
+  type Quota,
+  type SessionSummary,
+} from "../lib/api";
 import { formatClock } from "./app-shell";
 
 const PROMPTS = [
@@ -28,14 +33,40 @@ const SCENARIOS = [
   { emoji: "💬", title: "Solo charlar", desc: "Sin agenda — deja que fluya.", bg: "#ECE8D2" },
 ];
 
+function sessionMeta(s: SessionSummary): string {
+  const started = new Date(s.started_at);
+  const today = new Date();
+  const days = Math.floor(
+    (new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime() -
+      new Date(started.getFullYear(), started.getMonth(), started.getDate()).getTime()) /
+      86_400_000,
+  );
+  const when =
+    days === 0
+      ? "Hoy"
+      : days === 1
+      ? "Ayer"
+      : started.toLocaleDateString("es", { day: "numeric", month: "short" });
+  const mins = Math.max(1, Math.round(s.duration_s / 60));
+  const parts = [when, `${mins} min`];
+  if (s.correction_count) {
+    parts.push(
+      `${s.correction_count} correcci${s.correction_count === 1 ? "ón" : "ones"}`,
+    );
+  }
+  return parts.join(" · ");
+}
+
 export function HomeDashboard() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const { user } = useUser();
   const [quota, setQuota] = useState<Quota | null>(null);
+  const [latest, setLatest] = useState<SessionSummary | null>(null);
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
     getQuota(getToken).then(setQuota).catch(() => setQuota(null));
+    latestSession(getToken).then(setLatest).catch(() => setLatest(null));
   }, [isLoaded, isSignedIn, getToken]);
 
   const remaining = quota
@@ -143,6 +174,61 @@ export function HomeDashboard() {
           </Link>
         ))}
       </div>
+
+      {/* Your activity — resume the last conversation with memory */}
+      {latest && (
+        <>
+          <div className="flex items-center justify-between mt-11 mb-[18px]">
+            <h2 className="font-display text-[22px] tracking-[-0.02em]">
+              Tu actividad
+            </h2>
+            <Link
+              href="/history"
+              className="text-[14px] font-semibold text-[var(--color-accent)] hover:underline"
+            >
+              Historial →
+            </Link>
+          </div>
+          <Link
+            href={`/talk?resume=${latest.id}${
+              latest.title ? `&resumeTitle=${encodeURIComponent(latest.title)}` : ""
+            }`}
+            className="w-full flex items-center gap-5 text-left text-white rounded-[26px] px-6 py-5 overflow-hidden relative transition-transform duration-[180ms] hover:-translate-y-[2px]"
+            style={{
+              background: "linear-gradient(120deg, #23261C, #33381F)",
+              boxShadow: "0 26px 56px -30px rgba(30,34,20,0.9)",
+            }}
+          >
+            <div
+              className="flex-none rounded-full"
+              style={{
+                width: 62,
+                height: 62,
+                background:
+                  "radial-gradient(circle at 36% 30%, var(--color-orb-a), var(--color-orb-b) 52%, var(--color-orb-c))",
+                boxShadow:
+                  "0 14px 30px -12px var(--color-glow), inset 0 -8px 18px rgba(60,74,30,0.5), inset 0 8px 16px rgba(240,248,220,0.5)",
+              }}
+            />
+            <div className="flex-1 min-w-0">
+              <div className="text-[11px] font-bold tracking-[0.09em] text-white/50">
+                RETOMA DONDE LO DEJASTE
+              </div>
+              <div className="font-display text-[clamp(18px,2.2vw,24px)] tracking-[-0.01em] mt-1 truncate">
+                {latest.title || "Tu última conversación"}
+              </div>
+              <div className="text-[14px] text-white/[0.55] mt-0.5">
+                {sessionMeta(latest)}
+              </div>
+            </div>
+            <div className="flex-none w-[52px] h-[52px] rounded-full bg-[var(--color-btn)] flex items-center justify-center">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--color-btn-text)">
+                <path d="M8 5.5v13l11-6.5z" />
+              </svg>
+            </div>
+          </Link>
+        </>
+      )}
 
       {/* Scenario grid */}
       <div className="flex items-center justify-between mt-11 mb-[18px]">

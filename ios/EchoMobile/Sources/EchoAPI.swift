@@ -130,10 +130,16 @@ final class EchoAPI {
     // MARK: endpoints
 
     /// POST /token — starts a call: quota gate + per-call room + agent dispatch.
-    func mintToken(scenario: String? = nil) async throws -> TokenResponse {
+    func mintToken(
+        scenario: String? = nil,
+        resumeSessionId: String? = nil
+    ) async throws -> TokenResponse {
+        var body: [String: Any?] = [:]
+        if let scenario { body["scenario"] = scenario }
+        if let resumeSessionId { body["resume_session_id"] = resumeSessionId }
         let (data, http) = try await request(
             "/token", method: "POST",
-            json: scenario != nil ? ["scenario": scenario] : nil
+            json: body.isEmpty ? nil : body
         )
         switch http.statusCode {
         case 200..<300:

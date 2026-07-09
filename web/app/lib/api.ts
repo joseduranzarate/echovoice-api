@@ -59,13 +59,17 @@ async function authedFetch(
 export async function mintToken(
   getToken: GetToken,
   scenario?: string,
+  resumeSessionId?: string,
 ): Promise<TokenResponse> {
   const res = await authedFetch("/token", getToken, {
     method: "POST",
-    ...(scenario
+    ...(scenario || resumeSessionId
       ? {
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ scenario }),
+          body: JSON.stringify({
+            scenario,
+            resume_session_id: resumeSessionId,
+          }),
         }
       : {}),
   });

@@ -114,11 +114,24 @@ EXAM_PROMPTS = {
 }
 
 
-def build_system_prompt(scenario: str | None, level: str | None = None) -> str:
+def build_system_prompt(
+    scenario: str | None,
+    level: str | None = None,
+    resume: dict | None = None,
+) -> str:
     prompt = SYSTEM_PROMPT
     pacing = LEVEL_PACING.get((level or "").strip().capitalize())
     if pacing:
         prompt += pacing
+    if resume:
+        titled = f' (titled "{resume["title"]}")' if resume.get("title") else ""
+        return prompt + (
+            f" The learner is returning to CONTINUE a previous conversation"
+            f"{titled}. The earlier turns of that conversation are already in "
+            "this context. Welcome them back warmly in one short sentence, "
+            "briefly recall what you were talking about, and pick up naturally "
+            "where it left off — do not re-introduce yourself or start over."
+        )
     if not scenario:
         return prompt + " Open with a warm, brief greeting and an easy question."
     if exam := EXAM_PROMPTS.get(scenario.strip().lower()):
@@ -215,6 +228,7 @@ async def run_session(
     scenario: str | None = None,
     level: str | None = None,
     dispatch_user_id: str | None = None,
+    resume: dict | None = None,
 ):
     """One dispatched call: join the room, run the pipeline, leave when the
     user leaves (or never shows up). Only this task touches LiveKit — the
@@ -241,9 +255,14 @@ async def run_session(
     llm = GroqLLMService(api_key=GROQ_API_KEY)
     tts = CartesiaTTSService(api_key=CARTESIA_API_KEY, voice_id=CARTESIA_VOICE_ID)
 
-    context = LLMContext(
-        messages=[{"role": "system", "content": build_system_prompt(scenario, level)}]
-    )
+    # Resume-with-memory: seed the previous conversation's tail as real
+    # chat turns so Echo actually remembers it, not just a recap line.
+    messages = [
+        {"role": "system", "content": build_system_prompt(scenario, level, resume)}
+    ]
+    if resume:
+        messages += resume["turns"]
+    context = LLMContext(messages=messages)
     context_aggregator = LLMContextAggregatorPair(context)
 
     session = SessionState()
@@ -444,8 +463,25 @@ async def handle_dispatch(request: web.Request) -> web.Response:
     level = (body.get("level") or "").strip()[:40] or None
     dispatch_user_id = (body.get("user_id") or "").strip() or None
 
+    # Resume payload from the API: {"title": ..., "turns": [{role, text}]}.
+    # Re-sanitize here — the dispatch endpoint trusts the shared secret, not
+    # the payload shape.
+    resume = None
+    if isinstance(body.get("resume"), dict):
+        raw = body["resume"]
+        turns = [
+            {"role": t["role"], "text": str(t["text"])[:400]}
+            for t in (raw.get("turns") or [])[:12]
+            if isinstance(t, dict)
+            and t.get("role") in ("user", "assistant")
+            and t.get("text")
+        ]
+        if turns:
+            title = str(raw.get("title") or "").strip()[:120] or None
+            resume = {"title": title, "turns": turns}
+
     task = asyncio.create_task(
-        run_session(room_name, scenario, level, dispatch_user_id)
+        run_session(room_name, scenario, level, dispatch_user_id, resume)
     )
     active_rooms[room_name] = task
 
