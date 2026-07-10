@@ -1196,6 +1196,25 @@ build_system_prompt    "welcome them back, recall the topic, continue —
   `pendingResume` handoff, `mintToken(resumeSessionId:)`, same badge
 - Caps keep the dispatch payload and prompt small: 12 turns × 400 chars
 
+### 2026-07-10 — Dynamic Home headline
+
+"¿Hablamos?" is now rules-based, driven by data Home already loads
+(GET /sessions/latest) — no new endpoints, no LLM cost:
+
+| Last session | Web headline | iOS (after "Hola X,") |
+|---|---|---|
+| loading | ¿Hablamos? | ¿hablamos? |
+| none (new user) | ¿Empezamos? | ¿hablamos? |
+| today | ¿Otra ronda? | ¿otra ronda? |
+| yesterday | Ayer hablaste N min. ¿Seguimos? | ayer hablaste N min — ¿seguimos? |
+| 2 days | ¿Hablamos? | ¿hablamos? |
+| 3+ days | Te extrañamos — ¿hablamos? | te extrañamos — ¿hablamos? |
+
+Web distinguishes loading (`undefined`) from new-user (`null`) so
+first-timers get "¿Empezamos?"; iOS can't tell them apart (nil both
+ways) so it stays neutral. Considered and deferred: LLM-generated
+greeting from the analysis job (premium-feel, revisit post-pricing).
+
 ### Technical debt
 
 - **Consolidate Railway services into one project** (2026-07-05): API and

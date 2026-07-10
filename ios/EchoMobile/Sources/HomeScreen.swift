@@ -13,6 +13,37 @@ struct HomeScreen: View {
         return fmtClock(q.dailyRemainingS + q.trialRemainingS)
     }
 
+    // Dynamic headline: reacts to the learner's last session.
+    private var headline: String {
+        guard let last = router.latest, let days = daysSince(last) else {
+            return "¿hablamos?"
+        }
+        switch days {
+        case 0: return "¿otra ronda?"
+        case 1:
+            let mins = last.durationS / 60
+            return mins >= 1 ? "ayer hablaste \(mins) min — ¿seguimos?" : "¿seguimos?"
+        case 3...: return "te extrañamos — ¿hablamos?"
+        default: return "¿hablamos?"
+        }
+    }
+
+    private func daysSince(_ s: SessionSummary) -> Int? {
+        guard let date = sessionDate(s) else { return nil }
+        return Calendar.current.dateComponents(
+            [.day],
+            from: Calendar.current.startOfDay(for: date),
+            to: Calendar.current.startOfDay(for: Date())
+        ).day
+    }
+
+    private func sessionDate(_ s: SessionSummary) -> Date? {
+        let iso = ISO8601DateFormatter()
+        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return iso.date(from: s.startedAt)
+            ?? ISO8601DateFormatter().date(from: s.startedAt)
+    }
+
     var body: some View {
         ZStack {
             Theme.tabGradient.ignoresSafeArea()
@@ -32,7 +63,7 @@ struct HomeScreen: View {
                     }
                     .padding(.bottom, 26)
 
-                    Text("Hola \(router.userName),\n¿hablamos?")
+                    Text("Hola \(router.userName),\n\(headline)")
                         .font(.jakarta(28, .heavy))
                         .tracking(-0.7)
                         .lineSpacing(2)
@@ -201,10 +232,7 @@ struct HomeScreen: View {
 
     private func resumeMeta(_ s: SessionSummary) -> String {
         var parts: [String] = []
-        let iso = ISO8601DateFormatter()
-        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let date = iso.date(from: s.startedAt)
-            ?? ISO8601DateFormatter().date(from: s.startedAt) {
+        if let date = sessionDate(s) {
             if Calendar.current.isDateInToday(date) {
                 parts.append("Hoy")
             } else if Calendar.current.isDateInYesterday(date) {

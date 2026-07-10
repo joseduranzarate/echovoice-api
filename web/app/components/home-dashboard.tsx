@@ -33,14 +33,34 @@ const SCENARIOS = [
   { emoji: "💬", title: "Solo charlar", desc: "Sin agenda — deja que fluya.", bg: "#ECE8D2" },
 ];
 
-function sessionMeta(s: SessionSummary): string {
-  const started = new Date(s.started_at);
+function daysSince(iso: string): number {
+  const started = new Date(iso);
   const today = new Date();
-  const days = Math.floor(
+  return Math.floor(
     (new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime() -
       new Date(started.getFullYear(), started.getMonth(), started.getDate()).getTime()) /
       86_400_000,
   );
+}
+
+// Dynamic Home headline: reacts to the learner's last session. `undefined`
+// means still loading (neutral default); `null` means a brand-new user.
+function headline(latest: SessionSummary | null | undefined): string {
+  if (latest === undefined) return "¿Hablamos?";
+  if (latest === null) return "¿Empezamos?";
+  const days = daysSince(latest.started_at);
+  if (days === 0) return "¿Otra ronda?";
+  if (days === 1) {
+    const mins = Math.round(latest.duration_s / 60);
+    return mins >= 1 ? `Ayer hablaste ${mins} min. ¿Seguimos?` : "¿Seguimos?";
+  }
+  if (days >= 3) return "Te extrañamos — ¿hablamos?";
+  return "¿Hablamos?";
+}
+
+function sessionMeta(s: SessionSummary): string {
+  const started = new Date(s.started_at);
+  const days = daysSince(s.started_at);
   const when =
     days === 0
       ? "Hoy"
@@ -61,7 +81,9 @@ export function HomeDashboard() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const { user } = useUser();
   const [quota, setQuota] = useState<Quota | null>(null);
-  const [latest, setLatest] = useState<SessionSummary | null>(null);
+  const [latest, setLatest] = useState<SessionSummary | null | undefined>(
+    undefined,
+  );
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
@@ -87,7 +109,7 @@ export function HomeDashboard() {
             {name}
           </div>
           <h1 className="font-display text-[clamp(30px,4vw,44px)] mt-2">
-            ¿Hablamos?
+            {headline(latest)}
           </h1>
         </div>
         {remaining !== null && (
