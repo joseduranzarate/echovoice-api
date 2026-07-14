@@ -123,12 +123,15 @@ def mint_token(
                     ],
                 }
 
-    # Learner level (from onboarding preferences) rides along so the agent
-    # can pace the conversation.
+    # Learner profile (from onboarding preferences) rides along so the agent
+    # can pace and frame the conversation.
     try:
-        level = get_preferences(user_id).get("level")
+        prefs = get_preferences(user_id)
     except Exception:
-        level = None
+        prefs = {}
+    level = prefs.get("level")
+    institute = prefs.get("institute")
+    cycle = prefs.get("cycle")
 
     # Wake the agent for this room BEFORE handing the token back, so it's
     # usually already in the room when the browser connects.
@@ -140,6 +143,8 @@ def mint_token(
                 "user_id": user_id,
                 "scenario": scenario or None,
                 "level": level,
+                "institute": institute,
+                "cycle": cycle,
                 "resume": resume,
             },
             headers={"X-Dispatch-Secret": DISPATCH_SECRET},
@@ -266,6 +271,10 @@ def remove_phrase(phrase_id: str, user_id: str = Depends(require_clerk_user)):
 class PreferencesBody(BaseModel):
     level: Optional[str] = None
     topic: Optional[str] = None
+    # Academy alignment: 'britanico' | 'icpna' | 'self', plus the cycle the
+    # student is currently in (e.g. 'basico-7').
+    institute: Optional[str] = None
+    cycle: Optional[str] = None
 
 
 @app.get("/me/preferences")
@@ -279,7 +288,14 @@ def patch_preferences(
 ):
     level = (body.level or "").strip()[:40] or None if body.level is not None else None
     topic = (body.topic or "").strip()[:80] or None if body.topic is not None else None
-    return update_preferences(user_id, level, topic)
+    institute = None
+    if body.institute is not None:
+        v = body.institute.strip().lower()
+        if v not in ("britanico", "icpna", "self"):
+            return JSONResponse(status_code=400, content={"error": "bad_institute"})
+        institute = v
+    cycle = (body.cycle or "").strip().lower()[:40] or None if body.cycle is not None else None
+    return update_preferences(user_id, level, topic, institute, cycle)
 
 
 # ── Account deletion ────────────────────────────────────────────────────────

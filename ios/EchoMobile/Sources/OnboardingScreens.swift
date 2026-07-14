@@ -273,13 +273,18 @@ struct AuthScreen: View {
     }
 }
 
-// MARK: - Setup (2 questions)
+// MARK: - Setup (3 questions: academy → ciclo/nivel → tema)
 
 struct SetupScreen: View {
     @EnvironmentObject var router: Router
     @State private var step = 0
+    @State private var institute: String? = nil
+    @State private var band: String? = nil
+    @State private var cycleNum: Int? = nil
     @State private var level: String? = nil
     @State private var topic: String? = nil
+
+    private var isAcademy: Bool { institute == "britanico" || institute == "icpna" }
 
     var body: some View {
         ZStack {
@@ -289,12 +294,13 @@ struct SetupScreen: View {
                 // Top bar: back + progress dots
                 HStack {
                     CircleIconButton(systemName: "chevron.left", size: 42) {
-                        if step == 1 { step = 0 } else { router.go(.auth) }
+                        if step > 0 { step -= 1 } else { router.go(.auth) }
                     }
                     Spacer()
                     HStack(spacing: 6) {
                         progressDot(on: true)
-                        progressDot(on: step == 1)
+                        progressDot(on: step >= 1)
+                        progressDot(on: step >= 2)
                     }
                 }
                 .padding(.bottom, 24)
@@ -303,18 +309,31 @@ struct SetupScreen: View {
 
                 if step == 0 {
                     question(
-                        kicker: "PREGUNTA 1 DE 2",
+                        kicker: "PREGUNTA 1 DE 3",
+                        title: "¿Dónde estudias inglés?",
+                        sub: "Así practicamos el speaking de tu ciclo.",
+                        options: DemoData.institutes,
+                        selected: institute
+                    ) { pick in
+                        institute = pick
+                        withAnimation(.easeInOut(duration: 0.2)) { step = 1 }
+                    }
+                } else if step == 1 && isAcademy {
+                    cycleQuestion
+                } else if step == 1 {
+                    question(
+                        kicker: "PREGUNTA 2 DE 3",
                         title: "¿Cuál es tu nivel actual?",
                         sub: "Solo ayuda a Echo a marcar el ritmo.",
                         options: DemoData.levels,
                         selected: level
                     ) { pick in
                         level = pick
-                        withAnimation(.easeInOut(duration: 0.2)) { step = 1 }
+                        withAnimation(.easeInOut(duration: 0.2)) { step = 2 }
                     }
                 } else {
                     question(
-                        kicker: "PREGUNTA 2 DE 2",
+                        kicker: "PREGUNTA 3 DE 3",
                         title: "¿Qué quieres practicar?",
                         sub: "Echo seguirá tu ritmo de todas formas.",
                         options: DemoData.topics,
@@ -326,11 +345,18 @@ struct SetupScreen: View {
 
                 Spacer()
 
-                if topic != nil {
+                if topic != nil, step == 2 {
                     YellowPillButton(title: "Entrar a Echo") {
-                        // Persist server-side — the agent paces by level.
-                        // level/topic hold English ids (Option.value).
-                        Task { try? await router.api.updatePreferences(level: level, topic: topic) }
+                        // Persist server-side — the agent paces and frames the
+                        // conversation from these (English ids/markers only).
+                        let cycle = isAcademy ? band.flatMap { b in cycleNum.map { "\(b)-\($0)" } } : nil
+                        Task {
+                            try? await router.api.updatePreferences(
+                                level: level, topic: topic,
+                                institute: institute, cycle: cycle
+                            )
+                            router.refreshPrefs()
+                        }
                         router.go(.home)
                     }
                     .transition(.opacity.combined(with: .move(edge: .bottom)))
@@ -339,6 +365,64 @@ struct SetupScreen: View {
             .padding(.horizontal, 24)
             .padding(.top, 12)
             .padding(.bottom, 20)
+        }
+    }
+
+    private var cycleQuestion: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("PREGUNTA 2 DE 3")
+                .font(.jakarta(12, .bold))
+                .tracking(0.7)
+                .foregroundStyle(Theme.accent)
+                .padding(.bottom, 12)
+            Text("¿En qué ciclo estás?")
+                .font(.jakarta(30, .heavy))
+                .tracking(-0.6)
+                .foregroundStyle(Theme.ink)
+            Text("Echo hablará al nivel de tu ciclo.")
+                .font(.jakarta(15))
+                .foregroundStyle(Theme.textMuted)
+                .padding(.top, 10)
+                .padding(.bottom, 22)
+
+            VStack(alignment: .leading, spacing: 16) {
+                ForEach(DemoData.bands) { b in
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(b.label)
+                            .font(.jakarta(13, .semibold))
+                            .foregroundStyle(Theme.textMuted)
+                        LazyVGrid(
+                            columns: Array(repeating: GridItem(.flexible(), spacing: 7), count: 6),
+                            spacing: 7
+                        ) {
+                            ForEach(1...12, id: \.self) { n in
+                                let selected = band == b.id && cycleNum == n
+                                Button {
+                                    band = b.id
+                                    cycleNum = n
+                                    level = b.level
+                                    withAnimation(.easeInOut(duration: 0.2)) { step = 2 }
+                                } label: {
+                                    Text("\(n)")
+                                        .font(.jakarta(14, .semibold))
+                                        .foregroundStyle(selected ? .white : Theme.ink)
+                                        .frame(maxWidth: .infinity)
+                                        .frame(height: 38)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 11, style: .continuous)
+                                                .fill(selected ? Theme.inkDark : Color.white)
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 11, style: .continuous)
+                                                .stroke(selected ? Theme.inkDark : Theme.chipBd, lineWidth: 1.5)
+                                        )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 

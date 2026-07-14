@@ -1215,6 +1215,51 @@ first-timers get "¿Empezamos?"; iOS can't tell them apart (nil both
 ways) so it stays neutral. Considered and deferred: LLM-generated
 greeting from the analysis job (premium-feel, revisit post-pricing).
 
+### 2026-07-14 — Academy alignment: Británico / ICPNA students
+
+**Strategic pivot** (partner feedback): the core users are Británico and
+ICPNA students practicing the speaking their classes don't have time
+for. Everything stays conversation-only — the curriculum just decides
+the topic. First increment:
+
+```
+Onboarding                     Home (academy student)
+──────────                     ──────────────────────
+¿Dónde estudias inglés?        [Británico · Básico 7]  Tu práctica de speaking
+ Británico / ICPNA /            ┌─────────────────────────────────────┐
+ Por mi cuenta                  │ 📖 ¿Qué estás viendo en clase?  [▶] │
+        │                       └─────────────────────────────────────┘
+        ▼ (academia)                       │ "Unidad 4: past events"
+¿En qué ciclo estás?                       ▼
+ Básico/Intermedio/Avanzado    /talk?scenario=class:{texto}
+ × 1-12 grid                               │
+        │ (por mi cuenta:                  ▼
+        ▼  pregunta de nivel)  agente: conversación que obliga a
+¿De qué quieres hablar?        producir el lenguaje de esa unidad
+```
+
+- **Migration 005 → `004_institute_cycle.sql`** (RUN PENDING): users +
+  institute ('britanico'|'icpna'|'self') + cycle ('basico-7')
+- API: preferences GET/PATCH extended (institute validated, picking
+  'self' clears cycle); /token forwards institute+cycle in dispatch
+- Agent: `academy_context()` — institute framing ("student at Británico…
+  conversation only, never drills") + cycle band → CEFR pacing
+  (básico A1-A2, intermedio B1-B2, avanzado C1). Cycle band **outranks**
+  the self-reported level. New `class:` scenario marker: conversation
+  engineered to make the student produce that unit's language
+- Onboarding both platforms: 3 steps — institute → ciclo (12-number
+  grid per band; picking a ciclo auto-sets level, no double question)
+  or nivel (por mi cuenta) → tema
+- Home both platforms: institute·ciclo badge ("Tu práctica de
+  speaking"), "¿Qué estás viendo en clase?" input (the centerpiece for
+  academy students), suggestion chips now ciclo-aware (hardcoded per
+  band — first taste of the curriculum map)
+- Talk badge: "Tu clase: Unidad 4 …"
+
+Next (needs partner): official syllabus outlines per level → real
+`curriculum` table (topics/can-do statements, NOT book content —
+copyright) → per-unit scenarios + end-of-cycle mock oral exam.
+
 ### Technical debt
 
 - **Consolidate Railway services into one project** (2026-07-05): API and

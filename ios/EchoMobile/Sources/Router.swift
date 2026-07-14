@@ -30,6 +30,7 @@ final class Router: ObservableObject {
     @Published var sessions: [SessionSummary] = []
     @Published var phrases: [SavedPhrase] = []
     @Published var latest: SessionSummary?
+    @Published var prefs: Preferences?
 
     // Cross-screen handoff
     @Published var selectedSessionID: String?
@@ -44,7 +45,7 @@ final class Router: ObservableObject {
     func go(_ s: Screen) {
         screen = s
         switch s {
-        case .home: refreshQuota(); refreshLatest()
+        case .home: refreshQuota(); refreshLatest(); refreshPrefs()
         case .history: refreshSessions()
         case .saved: refreshPhrases()
         case .profile: refreshQuota()
@@ -83,6 +84,13 @@ final class Router: ObservableObject {
         Task { [weak self] in
             guard let self else { return }
             if let p = try? await self.api.phrases() { self.phrases = p }
+        }
+    }
+
+    func refreshPrefs() {
+        Task { [weak self] in
+            guard let self else { return }
+            if let p = try? await self.api.preferences() { self.prefs = p }
         }
     }
 

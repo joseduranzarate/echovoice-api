@@ -204,20 +204,37 @@ def get_preferences(user_id: str) -> dict:
     res = (
         _client()
         .table("users")
-        .select("level, topic")
+        .select("level, topic, institute, cycle")
         .eq("id", user_id)
         .single()
         .execute()
     )
-    return {"level": res.data.get("level"), "topic": res.data.get("topic")}
+    return {
+        "level": res.data.get("level"),
+        "topic": res.data.get("topic"),
+        "institute": res.data.get("institute"),
+        "cycle": res.data.get("cycle"),
+    }
 
 
-def update_preferences(user_id: str, level: str | None, topic: str | None) -> dict:
+def update_preferences(
+    user_id: str,
+    level: str | None,
+    topic: str | None,
+    institute: str | None = None,
+    cycle: str | None = None,
+) -> dict:
     patch = {}
     if level is not None:
         patch["level"] = level
     if topic is not None:
         patch["topic"] = topic
+    if institute is not None:
+        # "self" students have no cycle — clear any stale one.
+        patch["institute"] = institute
+        patch["cycle"] = cycle if institute != "self" else None
+    elif cycle is not None:
+        patch["cycle"] = cycle
     if patch:
         _client().table("users").update(patch).eq("id", user_id).execute()
     return get_preferences(user_id)

@@ -7,6 +7,8 @@ const KEY = "echo:onboarding:v1";
 export type OnboardingAnswers = {
   level: "beginner" | "intermediate" | "advanced";
   topic: "work" | "travel" | "casual" | "interviews";
+  institute?: "britanico" | "icpna" | "self";
+  cycle?: string | null; // e.g. "basico-7"; null for "self"
   completedAt: string;
 };
 

@@ -177,7 +177,12 @@ export async function deletePhrase(getToken: GetToken, id: string): Promise<void
 
 // ── Preferences ─────────────────────────────────────────────────────────────
 
-export type Preferences = { level: string | null; topic: string | null };
+export type Preferences = {
+  level: string | null;
+  topic: string | null;
+  institute: string | null; // 'britanico' | 'icpna' | 'self'
+  cycle: string | null; // e.g. 'basico-7'
+};
 
 export async function getPreferences(getToken: GetToken): Promise<Preferences> {
   const res = await authedFetch("/me/preferences", getToken);

@@ -344,6 +344,10 @@ func formatScenario(_ s: String) -> String {
     switch s {
     case "exam:ielts-speaking": return "Examen de práctica: IELTS Speaking"
     case "exam:toefl-speaking": return "Examen de práctica: TOEFL Speaking"
-    default: return "Practicando: \(s)"
+    default:
+        if s.lowercased().hasPrefix("class:") {
+            return "Tu clase: \(s.dropFirst(6).trimmingCharacters(in: .whitespaces))"
+        }
+        return "Practicando: \(s)"
     }
 }

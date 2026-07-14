@@ -35,6 +35,32 @@ enum DemoData {
         let value: String
     }
 
+    static let institutes: [Option] = [
+        .init(label: "Británico", value: "britanico"),
+        .init(label: "ICPNA", value: "icpna"),
+        .init(label: "Por mi cuenta", value: "self"),
+    ]
+
+    struct Band: Identifiable {
+        let id: String
+        let label: String
+        let level: String
+    }
+
+    static let bands: [Band] = [
+        .init(id: "basico", label: "Básico", level: "beginner"),
+        .init(id: "intermedio", label: "Intermedio", level: "intermediate"),
+        .init(id: "avanzado", label: "Avanzado", level: "advanced"),
+    ]
+
+    // Ciclo-aware Home suggestions for academy students (hardcoded per band
+    // until the full curriculum map exists).
+    static let bandPrompts: [String: [String]] = [
+        "basico": ["Presentarme y hablar de mi familia", "Mi rutina diaria", "Pedir comida en un restaurante", "Describir mi casa y mi barrio", "Hablar de mis gustos"],
+        "intermedio": ["Contar qué hice el fin de semana", "Hacer planes con un amigo", "Dar mi opinión sobre una película", "Comparar dos ciudades", "Contar una anécdota"],
+        "avanzado": ["Debatir un tema de actualidad", "Defender una opinión impopular", "Negociar un aumento de sueldo", "Explicar un problema complejo", "Contar una historia con detalle"],
+    ]
+
     static let levels: [Option] = [
         .init(label: "Principiante", value: "beginner"),
         .init(label: "Intermedio", value: "intermediate"),

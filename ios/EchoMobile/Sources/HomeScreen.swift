@@ -2,6 +2,8 @@ import SwiftUI
 
 struct HomeScreen: View {
     @EnvironmentObject var router: Router
+    @State private var classTopic = ""
+    @FocusState private var classFocused: Bool
 
     private var daypart: String {
         let h = Calendar.current.component(.hour, from: Date())
@@ -35,6 +37,34 @@ struct HomeScreen: View {
             from: Calendar.current.startOfDay(for: date),
             to: Calendar.current.startOfDay(for: Date())
         ).day
+    }
+
+    private var instituteLabel: String? {
+        switch router.prefs?.institute {
+        case "britanico": return "Británico"
+        case "icpna": return "ICPNA"
+        default: return nil
+        }
+    }
+
+    private var cycleTitle: String? {
+        guard let cycle = router.prefs?.cycle else { return nil }
+        let parts = cycle.split(separator: "-")
+        guard let band = parts.first else { return nil }
+        let pretty = band.prefix(1).uppercased() + band.dropFirst()
+        return parts.count > 1 ? "\(pretty) \(parts[1])" : pretty
+    }
+
+    private var prompts: [String] {
+        let band = router.prefs?.cycle?.split(separator: "-").first.map(String.init)
+        return band.flatMap { DemoData.bandPrompts[$0] } ?? DemoData.prompts
+    }
+
+    private func startClassTopic() {
+        let topic = classTopic.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !topic.isEmpty else { return }
+        classFocused = false
+        router.startTalk(scenario: "class: \(topic)")
     }
 
     private func sessionDate(_ s: SessionSummary) -> Date? {
@@ -76,8 +106,63 @@ struct HomeScreen: View {
                         .foregroundStyle(Theme.textMuted)
                         .padding(.top, 10)
 
-                    // Prompt chips → scenario roleplay, same as web
-                    FlowChips(items: DemoData.prompts) { label in
+                    // Academy framing: their institute + ciclo
+                    if let inst = instituteLabel {
+                        HStack(spacing: 8) {
+                            Text(cycleTitle.map { "\(inst) · \($0)" } ?? inst)
+                                .font(.jakarta(12, .bold))
+                                .foregroundStyle(Theme.accentDeep)
+                                .padding(.horizontal, 11)
+                                .padding(.vertical, 5)
+                                .background(Capsule().fill(Theme.accentSoft))
+                                .overlay(Capsule().stroke(Theme.accent, lineWidth: 1))
+                            Text("Tu práctica de speaking")
+                                .font(.jakarta(13))
+                                .foregroundStyle(Theme.textMuted)
+                        }
+                        .padding(.top, 12)
+
+                        // Practice what their class is covering this week
+                        HStack(spacing: 10) {
+                            Image(systemName: "book")
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundStyle(Theme.accent)
+                            TextField(
+                                "¿Qué estás viendo en clase?",
+                                text: $classTopic
+                            )
+                            .font(.jakarta(14))
+                            .focused($classFocused)
+                            .submitLabel(.go)
+                            .onSubmit { startClassTopic() }
+                            Button {
+                                startClassTopic()
+                            } label: {
+                                Image(systemName: "play.fill")
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundStyle(Theme.btnText)
+                                    .frame(width: 38, height: 38)
+                                    .background(Circle().fill(Theme.btnBg))
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(classTopic.trimmingCharacters(in: .whitespaces).isEmpty)
+                            .opacity(classTopic.trimmingCharacters(in: .whitespaces).isEmpty ? 0.4 : 1)
+                        }
+                        .padding(.leading, 16)
+                        .padding(.trailing, 7)
+                        .padding(.vertical, 7)
+                        .background(
+                            RoundedRectangle(cornerRadius: 18, style: .continuous).fill(.white)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .stroke(classFocused ? Theme.accent : Theme.chipBdSoft, lineWidth: 1.5)
+                        )
+                        .padding(.top, 14)
+                    }
+
+                    // Prompt chips → scenario roleplay (ciclo-aware for academy)
+                    FlowChips(items: prompts) { label in
                         router.startTalk(scenario: label)
                     }
                     .padding(.top, 22)

@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import {
+  getPreferences,
   getQuota,
   latestSession,
+  type Preferences,
   type Quota,
   type SessionSummary,
 } from "../lib/api";
@@ -18,6 +21,45 @@ const PROMPTS = [
   "Describir mi ciudad",
   "Charla casual",
 ];
+
+// Ciclo-aware suggestions for academy students (first taste of the full
+// curriculum map — hardcoded per band for now).
+const BAND_PROMPTS: Record<string, string[]> = {
+  basico: [
+    "Presentarme y hablar de mi familia",
+    "Mi rutina diaria",
+    "Pedir comida en un restaurante",
+    "Describir mi casa y mi barrio",
+    "Hablar de mis gustos",
+  ],
+  intermedio: [
+    "Contar qué hice el fin de semana",
+    "Hacer planes con un amigo",
+    "Dar mi opinión sobre una película",
+    "Comparar dos ciudades",
+    "Contar una anécdota",
+  ],
+  avanzado: [
+    "Debatir un tema de actualidad",
+    "Defender una opinión impopular",
+    "Negociar un aumento de sueldo",
+    "Explicar un problema complejo",
+    "Contar una historia con detalle",
+  ],
+};
+
+const INSTITUTE_LABEL: Record<string, string> = {
+  britanico: "Británico",
+  icpna: "ICPNA",
+};
+
+function cycleLabel(cycle: string | null): string | null {
+  if (!cycle) return null;
+  const [band, num] = cycle.split("-");
+  if (!band) return null;
+  const pretty = band.charAt(0).toUpperCase() + band.slice(1);
+  return num ? `${pretty} ${num}` : pretty;
+}
 
 // Exam chips send a marker; the agent maps it to a structured mock-exam
 // prompt (see EXAM_PROMPTS in agent/bot.py).
@@ -78,18 +120,35 @@ function sessionMeta(s: SessionSummary): string {
 }
 
 export function HomeDashboard() {
+  const router = useRouter();
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const { user } = useUser();
   const [quota, setQuota] = useState<Quota | null>(null);
   const [latest, setLatest] = useState<SessionSummary | null | undefined>(
     undefined,
   );
+  const [prefs, setPrefs] = useState<Preferences | null>(null);
+  const [classTopic, setClassTopic] = useState("");
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
     getQuota(getToken).then(setQuota).catch(() => setQuota(null));
     latestSession(getToken).then(setLatest).catch(() => setLatest(null));
+    getPreferences(getToken).then(setPrefs).catch(() => setPrefs(null));
   }, [isLoaded, isSignedIn, getToken]);
+
+  const institute = prefs?.institute ? INSTITUTE_LABEL[prefs.institute] : null;
+  const cycle = cycleLabel(prefs?.cycle ?? null);
+  const band = prefs?.cycle?.split("-")[0];
+  const prompts = (band && BAND_PROMPTS[band]) || PROMPTS;
+
+  function startClassTopic() {
+    const topic = classTopic.trim();
+    if (!topic) return;
+    // "class:" marker → the agent builds the conversation around what the
+    // student is studying this week (see build_system_prompt in agent/bot.py).
+    router.push(`/talk?scenario=${encodeURIComponent(`class: ${topic}`)}`);
+  }
 
   const remaining = quota
     ? quota.daily_remaining_s + quota.trial_remaining_s
@@ -111,6 +170,17 @@ export function HomeDashboard() {
           <h1 className="font-display text-[clamp(30px,4vw,44px)] mt-2">
             {headline(latest)}
           </h1>
+          {institute && (
+            <div className="flex items-center gap-2 mt-3">
+              <span className="px-3 py-1 rounded-full bg-[var(--color-accent-soft)] border border-[var(--color-accent)] text-[var(--color-accent-deep)] text-[13px] font-bold">
+                {institute}
+                {cycle ? ` · ${cycle}` : ""}
+              </span>
+              <span className="text-[14px] text-[var(--color-text-muted)]">
+                Tu práctica de speaking, fuera de clase.
+              </span>
+            </div>
+          )}
         </div>
         {remaining !== null && (
           <div className="flex items-center gap-[9px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-full px-[18px] py-2.5 text-[14px] font-semibold text-[var(--color-text-muted)]">
@@ -122,6 +192,50 @@ export function HomeDashboard() {
           </div>
         )}
       </div>
+
+      {/* Academy students: practice what their class is covering this week */}
+      {institute && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            startClassTopic();
+          }}
+          className="w-full flex items-center gap-3 bg-[var(--color-surface)] border-[1.5px] border-[var(--color-border)] rounded-[22px] pl-6 pr-3 py-3 mt-[30px] focus-within:border-[var(--color-accent)] transition-colors"
+          style={{ boxShadow: "var(--shadow-card)" }}
+        >
+          <svg
+            className="flex-none"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--color-accent)"
+            strokeWidth="1.9"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z" />
+          </svg>
+          <input
+            type="text"
+            value={classTopic}
+            onChange={(e) => setClassTopic(e.target.value)}
+            maxLength={180}
+            placeholder='¿Qué estás viendo en clase? p. ej. "Unidad 4: past events"'
+            className="flex-1 min-w-0 bg-transparent border-none outline-none text-[15px] text-[var(--color-ink)] placeholder:text-[var(--color-text-faint)]"
+          />
+          <button
+            type="submit"
+            disabled={!classTopic.trim()}
+            aria-label="Practicar esto"
+            className="flex-none w-[46px] h-[46px] rounded-full bg-[var(--color-btn)] flex items-center justify-center cursor-pointer disabled:opacity-40 hover:-translate-y-[1px] active:translate-y-0 transition-all"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--color-btn-text)">
+              <path d="M8 5.5v13l11-6.5z" />
+            </svg>
+          </button>
+        </form>
+      )}
 
       {/* Talk hero */}
       <Link
@@ -171,7 +285,7 @@ export function HomeDashboard() {
 
       {/* Prompt chips */}
       <div className="flex flex-wrap gap-2.5 mt-[26px]">
-        {PROMPTS.map((label) => (
+        {prompts.map((label) => (
           <Link
             key={label}
             href={`/talk?scenario=${encodeURIComponent(label)}`}

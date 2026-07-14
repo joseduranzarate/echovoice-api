@@ -84,6 +84,47 @@ LEVEL_PACING = {
 }
 
 
+# Academy alignment (Británico / ICPNA students). The cycle string is
+# e.g. "basico-7" — 12 monthly cycles per band. CEFR-ish mapping keeps the
+# agent's register aligned with what their teacher expects at that point.
+INSTITUTE_NAMES = {"britanico": "Británico", "icpna": "ICPNA"}
+
+CYCLE_BAND_PACING = {
+    "basico": (
+        " Pitch your English at CEFR A1-A2: simple present/past, everyday "
+        "vocabulary, short clear sentences. Recycle the learner's words back "
+        "in correct form rather than introducing new structures."
+    ),
+    "intermedio": (
+        " Pitch your English at CEFR B1-B2: natural everyday speech, "
+        "comparatives, conditionals and past tenses are fair game; stretch "
+        "them with occasional new phrases."
+    ),
+    "avanzado": (
+        " Pitch your English at CEFR C1: speak naturally with idioms and "
+        "nuance, and push for precision and richer vocabulary."
+    ),
+}
+
+
+def academy_context(institute: str | None, cycle: str | None) -> str:
+    """Extra system-prompt context for institute students."""
+    name = INSTITUTE_NAMES.get((institute or "").strip().lower())
+    if not name:
+        return ""
+    ctx = (
+        f" The learner is a student at {name}, an English institute in Peru, "
+        "and uses you to practice the speaking their classes don't have time "
+        "for. Conversation only — never turn this into written-style drills "
+        "or grammar lectures."
+    )
+    band, _, num = (cycle or "").strip().lower().partition("-")
+    if pacing := CYCLE_BAND_PACING.get(band):
+        pretty = band.capitalize() + (f" {num}" if num else "")
+        ctx += f" They are currently in cycle {pretty}." + pacing
+    return ctx
+
+
 # Exam-mode scenarios (Home's EXAM chips send these markers).
 EXAM_PROMPTS = {
     "exam:ielts-speaking": (
@@ -118,11 +159,31 @@ def build_system_prompt(
     scenario: str | None,
     level: str | None = None,
     resume: dict | None = None,
+    institute: str | None = None,
+    cycle: str | None = None,
 ) -> str:
     prompt = SYSTEM_PROMPT
-    pacing = LEVEL_PACING.get((level or "").strip().capitalize())
-    if pacing:
-        prompt += pacing
+    academy = academy_context(institute, cycle)
+    if academy:
+        # Cycle band outranks the self-reported level — it's the ground truth.
+        prompt += academy
+    else:
+        pacing = LEVEL_PACING.get((level or "").strip().capitalize())
+        if pacing:
+            prompt += pacing
+    # "class:" marker — Home's "¿Qué estás viendo en clase?" input. The text
+    # is whatever the student is studying this week (e.g. "Unidad 4:
+    # describing past events"): build the conversation around it.
+    if scenario and scenario.strip().lower().startswith("class:"):
+        unit = scenario.strip()[6:].strip()
+        return prompt + (
+            f' The learner is studying this in their English class right now: '
+            f'"{unit}". Build a natural conversation that makes them practice '
+            "exactly that — steer topics and questions so they must produce "
+            "the language of that unit, without ever explaining grammar "
+            "unless they ask. Open with a warm greeting and dive into a "
+            "question that requires that unit's language."
+        )
     if resume:
         titled = f' (titled "{resume["title"]}")' if resume.get("title") else ""
         return prompt + (
@@ -229,6 +290,8 @@ async def run_session(
     level: str | None = None,
     dispatch_user_id: str | None = None,
     resume: dict | None = None,
+    institute: str | None = None,
+    cycle: str | None = None,
 ):
     """One dispatched call: join the room, run the pipeline, leave when the
     user leaves (or never shows up). Only this task touches LiveKit — the
@@ -258,7 +321,10 @@ async def run_session(
     # Resume-with-memory: seed the previous conversation's tail as real
     # chat turns so Echo actually remembers it, not just a recap line.
     messages = [
-        {"role": "system", "content": build_system_prompt(scenario, level, resume)}
+        {
+            "role": "system",
+            "content": build_system_prompt(scenario, level, resume, institute, cycle),
+        }
     ]
     if resume:
         messages += resume["turns"]
@@ -480,8 +546,13 @@ async def handle_dispatch(request: web.Request) -> web.Response:
             title = str(raw.get("title") or "").strip()[:120] or None
             resume = {"title": title, "turns": turns}
 
+    institute = (body.get("institute") or "").strip().lower()[:20] or None
+    cycle = (body.get("cycle") or "").strip().lower()[:40] or None
+
     task = asyncio.create_task(
-        run_session(room_name, scenario, level, dispatch_user_id, resume)
+        run_session(
+            room_name, scenario, level, dispatch_user_id, resume, institute, cycle
+        )
     )
     active_rooms[room_name] = task
 

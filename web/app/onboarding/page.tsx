@@ -9,6 +9,27 @@ import { writeOnboarding, type OnboardingAnswers } from "../lib/onboarding";
 
 type Level = OnboardingAnswers["level"];
 type Topic = OnboardingAnswers["topic"];
+type Institute = NonNullable<OnboardingAnswers["institute"]>;
+
+const INSTITUTES: Array<{ id: Institute; label: string; hint: string }> = [
+  { id: "britanico", label: "Británico", hint: "Estudio en el Británico" },
+  { id: "icpna", label: "ICPNA", hint: "Estudio en el ICPNA" },
+  { id: "self", label: "Por mi cuenta", hint: "Practico a mi ritmo" },
+];
+
+const BANDS: Array<{ id: string; label: string }> = [
+  { id: "basico", label: "Básico" },
+  { id: "intermedio", label: "Intermedio" },
+  { id: "avanzado", label: "Avanzado" },
+];
+
+// Cycle band → self-study level (keeps the level field coherent for
+// academy students without asking twice).
+const BAND_LEVEL: Record<string, Level> = {
+  basico: "beginner",
+  intermedio: "intermediate",
+  avanzado: "advanced",
+};
 
 const LEVELS: Array<{ id: Level; label: string; hint: string }> = [
   { id: "beginner", label: "Recién empiezo", hint: "Conozco algunas palabras" },
@@ -23,25 +44,49 @@ const TOPICS: Array<{ id: Topic; label: string; hint: string }> = [
   { id: "interviews", label: "Entrevistas", hint: "Conversaciones de trabajo" },
 ];
 
+// Steps: 0 institute → 1 cycle (academy) | level (self) → 2 topic
 export default function OnboardingPage() {
   const router = useRouter();
   const { getToken } = useAuth();
-  const [step, setStep] = useState<0 | 1>(0);
+  const [step, setStep] = useState<0 | 1 | 2>(0);
+  const [institute, setInstitute] = useState<Institute | null>(null);
+  const [band, setBand] = useState<string | null>(null);
+  const [cycleNum, setCycleNum] = useState<number | null>(null);
   const [level, setLevel] = useState<Level | null>(null);
   const [topic, setTopic] = useState<Topic | null>(null);
 
+  const isAcademy = institute === "britanico" || institute === "icpna";
+
+  function pickInstitute(i: Institute) {
+    setInstitute(i);
+    setTimeout(() => setStep(1), 220);
+  }
+
+  function pickCycle(b: string, n: number) {
+    setBand(b);
+    setCycleNum(n);
+    setLevel(BAND_LEVEL[b]);
+    setTimeout(() => setStep(2), 220);
+  }
+
   function pickLevel(l: Level) {
     setLevel(l);
-    setTimeout(() => setStep(1), 220);
+    setTimeout(() => setStep(2), 220);
   }
 
   function pickTopic(t: Topic) {
     setTopic(t);
-    if (!level) return;
-    writeOnboarding({ level, topic: t });
-    // Persist server-side too — the agent paces the conversation by level.
-    // Best-effort: localStorage is the gate, the server copy is the upgrade.
-    void updatePreferences(getToken, { level, topic: t }).catch(() => {});
+    if (!institute || !level) return;
+    const cycle = isAcademy && band && cycleNum ? `${band}-${cycleNum}` : null;
+    writeOnboarding({ level, topic: t, institute, cycle });
+    // Persist server-side too — the agent paces and frames the conversation
+    // from these. Best-effort: localStorage is the gate.
+    void updatePreferences(getToken, {
+      level,
+      topic: t,
+      institute,
+      cycle,
+    }).catch(() => {});
     setTimeout(() => router.push("/talk"), 220);
   }
 
@@ -51,17 +96,90 @@ export default function OnboardingPage() {
         <Orb size={72} />
 
         <div className="w-full flex items-center gap-1.5">
-          <span
-            className="h-1 flex-1 rounded-full"
-            style={{ background: step >= 0 ? "var(--color-ink)" : "var(--color-border)" }}
-          />
-          <span
-            className="h-1 flex-1 rounded-full"
-            style={{ background: step >= 1 ? "var(--color-ink)" : "var(--color-border)" }}
-          />
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className="h-1 flex-1 rounded-full"
+              style={{
+                background: step >= i ? "var(--color-ink)" : "var(--color-border)",
+              }}
+            />
+          ))}
         </div>
 
         {step === 0 && (
+          <section className="w-full flex flex-col items-center gap-6 animate-fade-up">
+            <div className="flex flex-col items-center gap-2 text-center">
+              <h1 className="font-display font-bold text-[clamp(26px,4.5vw,34px)]">
+                ¿Dónde estudias inglés?
+              </h1>
+              <p className="text-[14px] text-[var(--color-text-muted)]">
+                Así practicamos el speaking de tu ciclo.
+              </p>
+            </div>
+
+            <div className="w-full flex flex-col gap-2.5">
+              {INSTITUTES.map((i) => (
+                <OptionCard
+                  key={i.id}
+                  label={i.label}
+                  hint={i.hint}
+                  selected={institute === i.id}
+                  onClick={() => pickInstitute(i.id)}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {step === 1 && isAcademy && (
+          <section className="w-full flex flex-col items-center gap-6 animate-fade-up">
+            <div className="flex flex-col items-center gap-2 text-center">
+              <h1 className="font-display font-bold text-[clamp(26px,4.5vw,34px)]">
+                ¿En qué ciclo estás?
+              </h1>
+              <p className="text-[14px] text-[var(--color-text-muted)]">
+                Echo hablará al nivel de tu ciclo. Puedes cambiarlo después.
+              </p>
+            </div>
+
+            <div className="w-full flex flex-col gap-4">
+              {BANDS.map((b) => (
+                <div key={b.id} className="w-full">
+                  <div className="text-[13px] font-semibold text-[var(--color-text-muted)] mb-2">
+                    {b.label}
+                  </div>
+                  <div className="grid grid-cols-6 gap-1.5">
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => {
+                      const selected = band === b.id && cycleNum === n;
+                      return (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => pickCycle(b.id, n)}
+                          className="h-10 rounded-xl border-[1.5px] text-[14px] font-semibold transition-all bg-white"
+                          style={{
+                            borderColor: selected
+                              ? "var(--color-ink)"
+                              : "var(--color-border)",
+                            background: selected ? "var(--color-ink)" : "white",
+                            color: selected ? "white" : "var(--color-ink)",
+                          }}
+                        >
+                          {n}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <BackButton onClick={() => setStep(0)} />
+          </section>
+        )}
+
+        {step === 1 && !isAcademy && (
           <section className="w-full flex flex-col items-center gap-6 animate-fade-up">
             <div className="flex flex-col items-center gap-2 text-center">
               <h1 className="font-display font-bold text-[clamp(26px,4.5vw,34px)]">
@@ -83,10 +201,12 @@ export default function OnboardingPage() {
                 />
               ))}
             </div>
+
+            <BackButton onClick={() => setStep(0)} />
           </section>
         )}
 
-        {step === 1 && (
+        {step === 2 && (
           <section className="w-full flex flex-col items-center gap-6 animate-fade-up">
             <div className="flex flex-col items-center gap-2 text-center">
               <h1 className="font-display font-bold text-[clamp(26px,4.5vw,34px)]">
@@ -109,17 +229,23 @@ export default function OnboardingPage() {
               ))}
             </div>
 
-            <button
-              type="button"
-              onClick={() => setStep(0)}
-              className="text-[14px] text-[var(--color-text-soft)] hover:text-[var(--color-ink)] transition-colors"
-            >
-              ← Atrás
-            </button>
+            <BackButton onClick={() => setStep(1)} />
           </section>
         )}
       </div>
     </main>
+  );
+}
+
+function BackButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="text-[14px] text-[var(--color-text-soft)] hover:text-[var(--color-ink)] transition-colors"
+    >
+      ← Atrás
+    </button>
   );
 }
 

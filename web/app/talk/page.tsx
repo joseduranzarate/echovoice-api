@@ -408,6 +408,8 @@ function TalkInner() {
 function formatScenario(s: string): string {
   if (s === "exam:ielts-speaking") return "Examen de práctica: IELTS Speaking";
   if (s === "exam:toefl-speaking") return "Examen de práctica: TOEFL Speaking";
+  if (s.toLowerCase().startsWith("class:"))
+    return `Tu clase: ${s.slice(6).trim()}`;
   return `Practicando: ${s}`;
 }
 

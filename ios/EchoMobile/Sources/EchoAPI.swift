@@ -76,6 +76,8 @@ struct SavedPhrase: Codable, Identifiable {
 struct Preferences: Codable {
     let level: String?
     let topic: String?
+    let institute: String? // 'britanico' | 'icpna' | 'self'
+    let cycle: String? // e.g. 'basico-7'
 }
 
 // MARK: - Client
@@ -206,10 +208,15 @@ final class EchoAPI {
         try await get("/me/preferences", as: Preferences.self)
     }
 
-    func updatePreferences(level: String? = nil, topic: String? = nil) async throws -> Preferences {
+    func updatePreferences(
+        level: String? = nil,
+        topic: String? = nil,
+        institute: String? = nil,
+        cycle: String? = nil
+    ) async throws -> Preferences {
         let (data, _) = try await request(
             "/me/preferences", method: "PATCH",
-            json: ["level": level, "topic": topic]
+            json: ["level": level, "topic": topic, "institute": institute, "cycle": cycle]
         )
         return try Self.decoder.decode(Preferences.self, from: data)
     }
